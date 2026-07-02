@@ -1,0 +1,2 @@
+analysis_id	dataset_id	include	role	merge_group	analysis_strategy	reference_dataset	notes
+mvp_analysis	GSE_MVP	true	discovery	mvp	independent_only	NA	fixture

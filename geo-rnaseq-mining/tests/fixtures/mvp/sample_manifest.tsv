@@ -1,0 +1,6 @@
+dataset_id	gse_id	gsm_id	srx_id	srr_id	sample_id	subject_id	include	group	condition	tissue	batch	sex	age	timepoint	treatment	paired_group	data_type	library_layout	matrix_path	fastq_r1	fastq_r2	notes	reviewer_note	review_status
+GSE_MVP	GSE_MVP	GSM_MVP_1	NA	NA	S1	SUBJ1	true	control	control	blood	B1	NA	NA	NA	NA	NA	bulk_matrix	NA	tests/fixtures/mvp/bulk_counts.tsv	NA	NA	fixture	reviewed	confirmed
+GSE_MVP	GSE_MVP	GSM_MVP_2	NA	NA	S2	SUBJ2	true	case	case	blood	B1	NA	NA	NA	NA	NA	bulk_matrix	NA	tests/fixtures/mvp/bulk_counts.tsv	NA	NA	fixture	reviewed	confirmed
+GSE_MVP	GSE_MVP	GSM_MVP_3	NA	NA	SC1	SUBJ1	true	control	control	blood	B1	NA	NA	NA	NA	NA	single_cell_h5ad	NA	tests/fixtures/mvp/single_cell_counts.tsv	NA	NA	fixture	reviewed	confirmed
+GSE_MVP	GSE_MVP	GSM_MVP_4	NA	NA	SC2	SUBJ2	true	case	case	blood	B1	NA	NA	NA	NA	NA	single_cell_h5ad	NA	tests/fixtures/mvp/single_cell_counts.tsv	NA	NA	fixture	reviewed	confirmed
+GSE_MVP	GSE_MVP	GSM_MVP_5	NA	NA	PENDING1	SUBJ3	false	case	case	blood	B1	NA	NA	NA	NA	NA	bulk_matrix	NA	tests/fixtures/mvp/bulk_counts.tsv	NA	NA	pending excluded from analysis	pending manual review	pending

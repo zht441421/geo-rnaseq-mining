@@ -4,14 +4,50 @@ include: "rules/common.smk"
 include: "rules/metadata.smk"
 include: "rules/validation.smk"
 include: "rules/data_entry.smk"
+include: "rules/adapter.smk"
 include: "rules/bulk.smk"
 include: "rules/single_cell.smk"
 include: "rules/multi_dataset.smk"
 include: "rules/integration.smk"
 include: "rules/reporting.smk"
+include: "rules/mvp.smk"
+
+ruleorder: mvp_pipeline > validate_manifest > build_data_inventory > bulk_scrna_integration > render_analysis_report > render_methods_report > build_audit_trail
 
 
 rule all:
+    input:
+        MVP_TARGETS
+    output:
+        "results/mvp/all_mvp.complete"
+    log:
+        "logs/system/all.log"
+    benchmark:
+        "benchmarks/system/all.tsv"
+    threads: 1
+    resources:
+        mem_mb=100,
+        runtime_min=1,
+        disk_mb=10
+    run:
+        if not MVP_TARGETS:
+            raise ValueError(
+                "Default rule all is the MVP target. Set mvp.enabled=true in "
+                "the config file, or call specific non-MVP rules explicitly."
+            )
+        Path(log[0]).parent.mkdir(parents=True, exist_ok=True)
+        Path(log[0]).write_text(
+            "geo-rnaseq-mining MVP targets completed.\n",
+            encoding="utf-8",
+        )
+        Path(output[0]).parent.mkdir(parents=True, exist_ok=True)
+        Path(output[0]).write_text(
+            "status\tcomplete\nmode\tmvp\n",
+            encoding="utf-8",
+        )
+
+
+rule all_full:
     input:
         rules.validate_authority_config.output,
         rules.enforce_validation_gate.output,
@@ -23,16 +59,18 @@ rule all:
         SINGLE_CELL_TARGETS,
         BULK_SCRNA_INTEGRATION_TARGETS,
         REPORT_TARGETS
-    output:
-        touch("resources/.skeleton_ready")
     log:
-        "logs/system/all.log"
+        "logs/system/all_full.log"
     benchmark:
-        "benchmarks/system/all.tsv"
+        "benchmarks/system/all_full.tsv"
     threads: 1
     resources:
         mem_mb=100,
         runtime_min=1,
         disk_mb=10
-    shell:
-        "echo geo-rnaseq-mining skeleton is ready > {log}"
+    run:
+        Path(log[0]).parent.mkdir(parents=True, exist_ok=True)
+        Path(log[0]).write_text(
+            "Explicit full target completed for configured non-MVP modules.\n",
+            encoding="utf-8",
+        )

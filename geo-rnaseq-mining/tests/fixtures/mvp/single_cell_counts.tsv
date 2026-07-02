@@ -1,0 +1,13 @@
+cell_id	dataset_id	sample_id	subject_id	group	cell_type	gene_id	count
+GSE_MVP:SC1:cell1	GSE_MVP	SC1	SUBJ1	control	Tcell	GENE1	5
+GSE_MVP:SC1:cell1	GSE_MVP	SC1	SUBJ1	control	Tcell	GENE2	4
+GSE_MVP:SC1:cell1	GSE_MVP	SC1	SUBJ1	control	Tcell	GENE3	1
+GSE_MVP:SC1:cell2	GSE_MVP	SC1	SUBJ1	control	Tcell	GENE1	6
+GSE_MVP:SC1:cell2	GSE_MVP	SC1	SUBJ1	control	Tcell	GENE2	3
+GSE_MVP:SC1:cell2	GSE_MVP	SC1	SUBJ1	control	Tcell	GENE4	1
+GSE_MVP:SC2:cell1	GSE_MVP	SC2	SUBJ2	case	Tcell	GENE1	12
+GSE_MVP:SC2:cell1	GSE_MVP	SC2	SUBJ2	case	Tcell	GENE2	2
+GSE_MVP:SC2:cell1	GSE_MVP	SC2	SUBJ2	case	Tcell	GENE3	1
+GSE_MVP:SC2:cell2	GSE_MVP	SC2	SUBJ2	case	Tcell	GENE1	10
+GSE_MVP:SC2:cell2	GSE_MVP	SC2	SUBJ2	case	Tcell	GENE2	2
+GSE_MVP:SC2:cell2	GSE_MVP	SC2	SUBJ2	case	Tcell	GENE4	2

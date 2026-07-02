@@ -1,0 +1,148 @@
+project:
+  name: geo-rnaseq-mining
+  root: "."
+  analysis_id: mvp_analysis
+  output_dir: results
+
+geo:
+  accessions: []
+  metadata_raw_dir: metadata/raw
+  metadata_suggested_dir: metadata/suggested
+  metadata_reviewed_file: tests/fixtures/mvp/sample_manifest.tsv
+  cache_dir: resources/cache/metadata
+
+references:
+  species: human
+  genome_build: fixture
+  annotation_release: fixture
+  fasta: null
+  gtf: null
+  transcriptome_fasta: null
+  tx2gene: null
+  salmon_index: null
+  star_index: null
+  gene_id_space: fixture
+  checksums_file: null
+
+resources:
+  default:
+    threads: 1
+    mem_mb: 1000
+    runtime_min: 10
+    disk_mb: 1000
+  download:
+    threads: 1
+    mem_mb: 1000
+    runtime_min: 10
+    disk_mb: 1000
+  bulk:
+    threads: 1
+    mem_mb: 1000
+    runtime_min: 10
+    disk_mb: 1000
+  single_cell:
+    threads: 1
+    mem_mb: 1000
+    runtime_min: 10
+    disk_mb: 1000
+
+validation:
+  fail_on_missing_required_manual_fields: true
+  allow_unknown_in_draft: false
+  reject_non_integer_deseq2_input: true
+  reject_cells_as_replicates: true
+  verify_checksums: true
+  max_missing_covariate_fraction: 0.2
+  dataset_dominance_fraction: 0.8
+  min_cells_per_celltype_sample: 1
+  min_donors_per_celltype_group: 1
+  barcode_subject_pattern: ".*"
+  celltype_metrics_file: null
+  dataset_compatibility: {}
+
+data_entry:
+  supplementary_download_enabled: false
+  sra_download_enabled: false
+  checksum_algorithm: sha256
+
+bulk:
+  enabled: false
+  count_input_type: raw_integer_counts
+  quantification_method: salmon_tximport
+  deseq2_alpha: 0.05
+  deseq2_abs_log2fc: 1.0
+  transformation: vst
+  detected_gene_min_count: 1
+  enrichment:
+    enabled: false
+  optional_modules:
+    wgcna: false
+    immune_infiltration: false
+    gsva: false
+    survival: false
+
+single_cell:
+  enabled: false
+  downstream_analysis_enabled: false
+  pseudobulk_level: subject_id
+  pseudobulk_source: raw_counts
+  celltype_ontology_file: tests/fixtures/mvp/celltype_ontology.tsv
+  count_layer: counts
+  pseudobulk:
+    min_cells_per_pseudobulk: 1
+    min_subjects_per_group: 1
+    min_total_counts: 1
+    min_detected_genes: 1
+    extra_strata: []
+
+multi_dataset:
+  enabled: false
+  dataset_plan_file: tests/fixtures/mvp/dataset_plan.tsv
+  default_strategy: null
+  prohibit_joint_model_when_dataset_group_confounded: true
+  validation_datasets_in_discovery_model: false
+  meta:
+    method: fixed_effect
+    alpha: 0.05
+    min_studies: 2
+    loo_effect_change_threshold: 0.5
+
+bulk_scrna_integration:
+  enabled: false
+  output_dir: results/integration
+  consensus_dir: results/consensus
+  gene_mapping_file: null
+  canonicalize_ensembl_versions: true
+  one_to_many_policy: report_unresolved
+  dominant_celltype_min_delta: 0.05
+  scoring_weights: {}
+  deconvolution:
+    enabled: false
+    build_signature_from_single_cell: false
+    method: nnls
+
+reporting:
+  enabled: false
+  formats: [html]
+  output_dir: results/reports
+  title: GEO RNA-seq mining MVP report
+
+reproducibility:
+  random_seed: 20260701
+  record_software_versions: true
+  record_database_versions: true
+  record_reference_versions: true
+  record_file_checksums: true
+  checksum_algorithm: sha256
+
+mvp:
+  enabled: true
+  dataset_id: GSE_MVP
+  contrast_id: case_vs_control
+  config_file: tests/fixtures/config/test_config.yaml
+  manifest: tests/fixtures/mvp/sample_manifest.tsv
+  contrasts: tests/fixtures/mvp/contrasts.tsv
+  dataset_plan: tests/fixtures/mvp/dataset_plan.tsv
+  celltype_ontology: tests/fixtures/mvp/celltype_ontology.tsv
+  bulk_counts: tests/fixtures/mvp/bulk_counts.tsv
+  single_cell_counts: tests/fixtures/mvp/single_cell_counts.tsv

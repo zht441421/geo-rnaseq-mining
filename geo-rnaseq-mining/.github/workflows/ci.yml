@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-schema-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install pytest snakemake pandas numpy pyyaml anndata scipy
+      - name: Unit tests
+        run: pytest tests/unit -q
+        working-directory: geo-rnaseq-mining
+      - name: Default dry-run
+        run: snakemake --dry-run --cores 1
+        working-directory: geo-rnaseq-mining
+
+  minimal-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install MVP dependencies
+        run: python -m pip install pytest snakemake pandas numpy pyyaml anndata scipy
+      - name: MVP dry-run
+        run: snakemake all --dry-run --cores 1 --configfile tests/fixtures/config/test_config.yaml
+        working-directory: geo-rnaseq-mining
+      - name: MVP e2e
+        run: snakemake all --cores 1 --configfile tests/fixtures/config/test_config.yaml
+        working-directory: geo-rnaseq-mining

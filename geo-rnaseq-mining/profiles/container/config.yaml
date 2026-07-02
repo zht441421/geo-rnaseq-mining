@@ -1,0 +1,5 @@
+executor: local
+use-conda: false
+use-singularity: true
+singularity-args: "--cleanenv"
+cores: 1

@@ -1,0 +1,22 @@
+adapters:
+  - name: generic_bulk_matrix
+    enabled: true
+    priority: 10
+    data_type: bulk_matrix
+    allowed_extensions:
+      - .tsv
+      - .csv
+      - .tsv.gz
+      - .csv.gz
+    writes_final_biological_fields: false
+    output_scope: data_inventory_or_suggested_mapping
+  - name: generic_10x
+    enabled: true
+    priority: 20
+    data_type: single_cell_10x
+    required_files:
+      - matrix.mtx
+      - barcodes.tsv
+      - features.tsv
+    writes_final_biological_fields: false
+    output_scope: data_inventory_or_suggested_mapping

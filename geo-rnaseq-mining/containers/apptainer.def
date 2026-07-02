@@ -1,0 +1,13 @@
+Bootstrap: docker
+From: mambaorg/micromamba:1.5.10
+
+%labels
+    Author geo-rnaseq-mining
+    Description Static MVP Apptainer definition
+
+%post
+    micromamba install -y -n base python=3.12 pandas numpy pyyaml snakemake
+    micromamba clean --all --yes
+
+%runscript
+    exec snakemake "$@"

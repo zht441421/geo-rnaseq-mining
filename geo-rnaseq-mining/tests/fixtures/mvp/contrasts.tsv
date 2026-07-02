@@ -1,0 +1,2 @@
+contrast_id	analysis_id	data_scope	numerator	denominator	subset_column	subset_value	design_formula	paired	min_replicates_per_group	enabled	notes
+case_vs_control	mvp_analysis	bulk	case	control	NA	NA	~ group	false	1	true	fixture
