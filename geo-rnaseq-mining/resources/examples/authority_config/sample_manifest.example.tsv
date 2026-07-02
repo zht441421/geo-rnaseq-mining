@@ -1,0 +1,3 @@
+dataset_id	gse_id	gsm_id	srx_id	srr_id	sample_id	subject_id	include	group	condition	tissue	batch	sex	age	timepoint	treatment	paired_group	data_type	library_layout	matrix_path	fastq_r1	fastq_r2	notes	reviewer_note	review_status
+GSETEST	GSETEST	GSM000001	SRX000001	SRR000001	SAMPLE_01	SUBJECT_01	true	case	disease_A	blood	BATCH_1	female	45	baseline	none	PAIR_01	bulk	PAIRED	NA	data/fastq/SRR000001_1.fastq.gz	data/fastq/SRR000001_2.fastq.gz	Discovery sample	Checked against GEO and publication	confirmed
+GSETEST	GSETEST	GSM000002	SRX000002	SRR000002	SAMPLE_02	SUBJECT_02	false	control	healthy	blood	BATCH_1	male	50	baseline	none	PAIR_02	bulk	PAIRED	NA	NA	NA	Excluded sample retained for audit	Failed prespecified inclusion criteria	excluded

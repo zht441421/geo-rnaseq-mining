@@ -1,0 +1,9 @@
+name: geo-rnaseq-mining-sra-tools
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.12
+  - sra-tools
+  - pigz

@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sample_manifest.schema.json",
+  "title": "Reviewed sample manifest row",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "dataset_id", "gse_id", "gsm_id", "srx_id", "srr_id", "sample_id",
+    "subject_id", "include", "group", "condition", "tissue", "batch",
+    "sex", "age", "timepoint", "treatment", "paired_group", "data_type",
+    "library_layout", "matrix_path", "fastq_r1", "fastq_r2", "notes",
+    "reviewer_note", "review_status"
+  ],
+  "properties": {
+    "dataset_id": {"type": "string", "minLength": 1, "not": {"const": "NA"}},
+    "gse_id": {"type": "string", "minLength": 1},
+    "gsm_id": {"type": "string", "minLength": 1},
+    "srx_id": {"type": "string"},
+    "srr_id": {"type": "string"},
+    "sample_id": {"type": "string", "minLength": 1, "not": {"const": "NA"}},
+    "subject_id": {"type": "string"},
+    "include": {"type": "boolean"},
+    "group": {"type": "string"},
+    "condition": {"type": "string"},
+    "tissue": {"type": "string"},
+    "batch": {"type": "string"},
+    "sex": {"type": "string"},
+    "age": {"type": "string"},
+    "timepoint": {"type": "string"},
+    "treatment": {"type": "string"},
+    "paired_group": {"type": "string"},
+    "data_type": {"type": "string", "minLength": 1},
+    "library_layout": {"type": "string"},
+    "matrix_path": {"type": "string"},
+    "fastq_r1": {"type": "string"},
+    "fastq_r2": {"type": "string"},
+    "notes": {"type": "string"},
+    "reviewer_note": {"type": "string"},
+    "review_status": {
+      "type": "string",
+      "enum": ["pending", "confirmed", "excluded"]
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"include": {"const": true}}, "required": ["include"]},
+      "then": {
+        "properties": {"review_status": {"const": "confirmed"}},
+        "required": ["review_status"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"review_status": {"const": "excluded"}},
+        "required": ["review_status"]
+      },
+      "then": {
+        "properties": {"include": {"const": false}},
+        "required": ["include"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"data_type": {"pattern": "(?i)pseudobulk"}},
+        "required": ["data_type"]
+      },
+      "then": {
+        "properties": {
+          "subject_id": {
+            "type": "string",
+            "minLength": 1,
+            "not": {"const": "NA"}
+          }
+        }
+      }
+    }
+  ]
+}

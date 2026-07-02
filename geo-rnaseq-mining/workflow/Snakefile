@@ -1,0 +1,38 @@
+configfile: "config/config.yaml"
+
+include: "rules/common.smk"
+include: "rules/metadata.smk"
+include: "rules/validation.smk"
+include: "rules/data_entry.smk"
+include: "rules/bulk.smk"
+include: "rules/single_cell.smk"
+include: "rules/multi_dataset.smk"
+include: "rules/integration.smk"
+include: "rules/reporting.smk"
+
+
+rule all:
+    input:
+        rules.validate_authority_config.output,
+        rules.enforce_validation_gate.output,
+        rules.build_data_inventory.output,
+        rules.prepare_raw_metadata.output,
+        rules.generate_metadata_review_report.output,
+        BULK_TARGETS,
+        MULTI_DATASET_TARGETS,
+        SINGLE_CELL_TARGETS,
+        BULK_SCRNA_INTEGRATION_TARGETS,
+        REPORT_TARGETS
+    output:
+        touch("resources/.skeleton_ready")
+    log:
+        "logs/system/all.log"
+    benchmark:
+        "benchmarks/system/all.tsv"
+    threads: 1
+    resources:
+        mem_mb=100,
+        runtime_min=1,
+        disk_mb=10
+    shell:
+        "echo geo-rnaseq-mining skeleton is ready > {log}"

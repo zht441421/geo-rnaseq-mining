@@ -1,0 +1,3 @@
+gse_accession	gsm_accession	title	source_name	organism	platform	characteristics_ch1_raw	relation_raw	srx_accessions	raw_metadata_json	fetched_at_utc	cache_hit
+GSEMOCK	GSMMOCK1	Case-like raw title	Raw tissue	Homo sapiens	GPLMOCK	"{""characteristics_ch1"":[""disease state: source wording""]}"	"[""SRA: https://www.ncbi.nlm.nih.gov/sra?term=SRX000001""]"	SRX000001	"{""title"":[""Case-like raw title""],""supplementary_file_1"":[""ftp://example.org/GSMMOCK1_raw.txt.gz""]}"	2026-01-03T00:00:00+00:00	false
+GSEMOCK	GSMMOCK2	Unresolved sample	Raw tissue	Homo sapiens	GPLMOCK	NA	NA	NA	"{""title"":[""Unresolved sample""]}"	2026-01-03T00:00:00+00:00	false

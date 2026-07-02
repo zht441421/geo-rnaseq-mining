@@ -1,0 +1,25 @@
+name: geo-rnaseq-mining-single-cell
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.12
+  - scanpy
+  - anndata
+  - pandas
+  - scipy
+  - numpy
+  - matplotlib
+  - seaborn
+  - scikit-learn
+  - scrublet
+  - python-igraph
+  - leidenalg
+  - pip
+  - r-base
+  - r-seurat
+  - bioconductor-singlecellexperiment
+  - bioconductor-zellkonverter
+  - pip:
+      - doubletdetection==4.3.0.post1

@@ -1,0 +1,2 @@
+gse_accession	title	summary	overall_design	submission_date	last_update_date	pubmed_id	organism	raw_metadata_json	fetched_at_utc	cache_hit
+GSEMOCK	Mock series	Mock summary	Mock design	2026-01-01	2026-01-02	NA	Homo sapiens	"{""title"":[""Mock series""],""supplementary_file_1"":[""https://example.org/files/GSEMOCK_counts.tsv.gz""]}"	2026-01-03T00:00:00+00:00	false

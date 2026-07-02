@@ -1,0 +1,43 @@
+# Snakemake
+.snakemake/
+
+# Conda and Python
+.conda/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# IDE and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Generated data and results
+data/raw/*
+data/sra/*
+data/fastq/*
+data/matrices/*
+data/objects/*
+data/references/*
+metadata/raw/*
+metadata/suggested/*
+results/*
+logs/*
+benchmarks/*
+resources/provenance/*
+resources/cache/*
+resources/validation/*
+
+# Preserve tracked directory placeholders
+!.gitkeep
+
+# User-specific configuration
+config/config.local.yaml
+profiles/*/config.local.yaml

@@ -1,0 +1,15 @@
+# Local toolchains and generated outputs
+work/
+outputs/
+
+# Python and workflow caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.snakemake/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

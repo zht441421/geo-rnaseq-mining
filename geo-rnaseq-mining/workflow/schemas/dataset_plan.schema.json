@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dataset_plan.schema.json",
+  "title": "Reviewed dataset plan row",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "analysis_id", "dataset_id", "include", "role", "merge_group",
+    "analysis_strategy", "reference_dataset", "notes"
+  ],
+  "properties": {
+    "analysis_id": {"type": "string", "minLength": 1, "not": {"const": "NA"}},
+    "dataset_id": {"type": "string", "minLength": 1, "not": {"const": "NA"}},
+    "include": {"type": "boolean"},
+    "role": {
+      "type": "string",
+      "enum": ["discovery", "validation", "supplementary"]
+    },
+    "merge_group": {"type": "string"},
+    "analysis_strategy": {
+      "type": "string",
+      "enum": [
+        "joint_model", "per_dataset_meta", "stratified_validation",
+        "independent_only", "single_cell_integration"
+      ]
+    },
+    "reference_dataset": {"type": "string"},
+    "notes": {"type": "string"}
+  }
+}

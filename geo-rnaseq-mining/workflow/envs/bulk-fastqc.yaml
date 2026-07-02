@@ -1,0 +1,8 @@
+name: geo-rnaseq-mining-bulk-fastqc
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - fastqc
+  - multiqc

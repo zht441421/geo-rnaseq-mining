@@ -1,0 +1,7 @@
+dataset_id	gse_id	gsm_id	srx_id	srr_id	sample_id	subject_id	include	group	condition	tissue	batch	sex	age	timepoint	treatment	paired_group	data_type	library_layout	matrix_path	fastq_r1	fastq_r2	notes	reviewer_note	review_status
+GSE_TEST	GSE_TEST	GSM_S1	SRX_S1	SRR_S1	S1	P1	true	control	control	blood	B1	female	50	baseline	none	P1	bulk_rnaseq	PAIRED	tests/fixtures/small_bulk_counts.tsv	NA	NA			confirmed
+GSE_TEST	GSE_TEST	GSM_S2	SRX_S2	SRR_S2	S2	P1	true	case	case	blood	B1	male	50	baseline	none	P1	bulk_rnaseq	PAIRED	tests/fixtures/small_bulk_counts.tsv	NA	NA			confirmed
+GSE_TEST	GSE_TEST	GSM_S3	SRX_S3	SRR_S3	S3	P2	true	control	control	blood	B1	female	50	baseline	none	P2	bulk_rnaseq	PAIRED	tests/fixtures/small_bulk_counts.tsv	NA	NA			confirmed
+GSE_TEST	GSE_TEST	GSM_S4	SRX_S4	SRR_S4	S4	P2	true	case	case	blood	B1	male	50	baseline	none	P2	bulk_rnaseq	PAIRED	tests/fixtures/small_bulk_counts.tsv	NA	NA			confirmed
+GSE_TEST	GSE_TEST	GSM_S5	SRX_S5	SRR_S5	S5	P3	true	control	control	blood	B1	female	50	baseline	none	P3	bulk_rnaseq	PAIRED	tests/fixtures/small_bulk_counts.tsv	NA	NA			confirmed
+GSE_TEST	GSE_TEST	GSM_S6	SRX_S6	SRR_S6	S6	P3	true	case	case	blood	B1	male	50	baseline	none	P3	bulk_rnaseq	PAIRED	tests/fixtures/small_bulk_counts.tsv	NA	NA			confirmed

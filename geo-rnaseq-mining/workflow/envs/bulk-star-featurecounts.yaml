@@ -1,0 +1,11 @@
+name: geo-rnaseq-mining-bulk-star-featurecounts
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.12
+  - pandas
+  - star
+  - subread
+  - pigz

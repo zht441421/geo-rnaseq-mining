@@ -1,0 +1,2 @@
+contrast_id	analysis_id	data_scope	numerator	denominator	subset_column	subset_value	design_formula	paired	min_replicates_per_group	enabled	notes
+disease_vs_control	analysis_primary	bulk	case	control	NA	NA	~ batch + group	false	3	true	Direction and design manually confirmed

@@ -1,0 +1,7 @@
+name: geo-rnaseq-mining-bulk-salmon
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - salmon

@@ -1,0 +1,353 @@
+project:
+  name: geo-rnaseq-mining
+  root: "."
+  analysis_id: example_analysis
+  output_dir: results
+
+geo:
+  accessions: []
+  metadata_raw_dir: metadata/raw
+  metadata_suggested_dir: metadata/suggested
+  metadata_reviewed_file: metadata/reviewed/sample_manifest.tsv
+  cache_dir: resources/cache/metadata
+  retries: 3
+  retry_delay_seconds: 5
+  timeout_seconds: 60
+  ncbi_request_interval_seconds: 0.34
+  supplementary_head_requests: true
+  ncbi_email: null
+  ncbi_api_key_env: NCBI_API_KEY
+  user_agent: geo-rnaseq-mining/0.1
+
+metadata_review:
+  case_candidate_terms:
+    - case
+    - disease
+    - patient
+    - tumor
+    - affected
+  control_candidate_terms:
+    - control
+    - healthy
+    - normal
+    - unaffected
+  technical_replicate_terms:
+    - technical replicate
+    - tech replicate
+    - sequencing replicate
+    - resequencing
+  condition_keys:
+    - condition
+    - disease
+    - diagnosis
+    - phenotype
+  tissue_keys:
+    - tissue
+    - organ
+    - anatomical site
+    - source
+  batch_keys:
+    - batch
+    - sequencing batch
+    - library batch
+  scrna_terms:
+    - single cell
+    - single-cell
+    - scrna
+  snrna_terms:
+    - single nucleus
+    - single-nucleus
+    - snrna
+
+references:
+  species: unknown
+  genome_build: unknown
+  annotation_release: unknown
+  fasta: null
+  gtf: null
+  transcriptome_fasta: null
+  tx2gene: null
+  salmon_index: null
+  star_index: null
+  gene_id_space: unknown
+  checksums_file: null
+
+resources:
+  default:
+    threads: 1
+    mem_mb: 2000
+    runtime_min: 30
+    disk_mb: 2000
+  download:
+    threads: 4
+    mem_mb: 8000
+    runtime_min: 240
+    disk_mb: 100000
+  bulk:
+    threads: 8
+    mem_mb: 32000
+    runtime_min: 480
+    disk_mb: 100000
+  single_cell:
+    threads: 8
+    mem_mb: 64000
+    runtime_min: 720
+    disk_mb: 200000
+
+validation:
+  fail_on_missing_required_manual_fields: true
+  allow_unknown_in_draft: true
+  reject_non_integer_deseq2_input: true
+  reject_cells_as_replicates: true
+  verify_checksums: true
+  max_missing_covariate_fraction: 0.2
+  dataset_dominance_fraction: 0.8
+  min_cells_per_celltype_sample: 20
+  min_donors_per_celltype_group: 2
+  barcode_subject_pattern: "^[ACGTN]{12,}(?:-[0-9]+)?$"
+  celltype_metrics_file: null
+  dataset_compatibility: {}
+
+data_entry:
+  supplementary_download_enabled: false
+  supplementary_allowlist: []
+  supplementary_max_size_bytes: 1073741824
+  sra_download_enabled: false
+  sra_retries: 3
+  retry_delay_seconds: 10
+  prefetch_max_size: 50G
+  keep_uncompressed_fastq: false
+  checksum_algorithm: sha256
+  download_cache_dir: data/raw/supplementary
+  fasterq_temp_dir: resources/tmp/fasterq
+
+bulk:
+  enabled: false
+  count_input_type: raw_integer_counts
+  quantification_method: salmon_tximport
+  strandedness: unstranded
+  salmon_libtype: A
+  featurecounts_strand: 0
+  salmon:
+    validate_mappings: true
+    seq_bias: true
+    gc_bias: true
+    extra_args: []
+  star:
+    extra_args: []
+  featurecounts:
+    extra_args: []
+  deseq2_alpha: 0.05
+  deseq2_abs_log2fc: 1.0
+  transformation: vst
+  outlier_z_threshold: 3.0
+  detected_gene_min_count: 1
+  enrichment:
+    enabled: true
+    go_gmt: null
+    pathway_gmt: null
+    gsea_gmt: null
+    min_gene_set_size: 10
+    max_gene_set_size: 500
+  optional_modules:
+    wgcna: false
+    immune_infiltration: false
+    gsva: false
+    survival: false
+    wgcna_settings:
+      soft_power: 6
+      min_module_size: 30
+    immune_infiltration_settings:
+      signature_matrix: null
+    gsva_settings:
+      gene_sets_gmt: null
+      method: zscore
+    survival_settings:
+      metadata_file: null
+      sample_id_column: sample_id
+      time_column: survival_time
+      event_column: survival_event
+      max_genes: 100
+
+single_cell:
+  enabled: false
+  downstream_analysis_enabled: false
+  modalities: []
+  pseudobulk_level: subject_id
+  pseudobulk_source: raw_counts
+  allow_scrna_snrna_joint_analysis: null
+  celltype_ontology_file: config/celltype_ontology.tsv
+  count_layer: counts
+  rds_converter_script: workflow/scripts/convert_single_cell_rds.R
+  sample_id_column: sample_id
+  author_celltype_column: author_label
+  cell_annotations_file: null
+  mitochondrial_gene_prefixes:
+    - MT-
+    - mt-
+  qc:
+    strategy: combined
+    gene_prefixes:
+      ribosomal:
+        - RPS
+        - RPL
+        - rps
+        - rpl
+      hemoglobin:
+        - HBA
+        - HBB
+        - Hba
+        - Hbb
+    hard:
+      min_genes: 200
+      max_genes: 10000
+      min_counts: 500
+      max_counts: null
+      max_pct_mt: 20
+      max_pct_ribo: 100
+      max_pct_hb: 100
+      min_complexity: 0
+    mad:
+      enabled: true
+      min_cells: 20
+      lower_n_mads: 3
+      upper_n_mads: 3
+      metrics:
+        - total_counts
+        - n_genes_by_counts
+        - pct_counts_mt
+  scrublet:
+    enabled: false
+    expected_doublet_rate: 0.06
+  doublet:
+    enabled: false
+    method: scrublet
+    exclude_predicted: true
+    min_cells: 20
+    scrublet:
+      expected_doublet_rate: 0.06
+    doubletdetection:
+      n_iterations: 25
+      pvalue_threshold: 0.001
+      voter_threshold: 0.5
+  ambient_rna:
+    method: none
+    low_count_quantile: 0.1
+  normalization:
+    target_sum: 10000
+    highly_variable_genes: 2000
+    pca_components: 50
+    hvg_flavor: seurat
+    scale_max_value: 10
+    store_scaled_layer: false
+  clustering:
+    n_neighbors: 15
+    leiden_resolution: 1.0
+  annotation:
+    marker_test: wilcoxon
+    markers_per_cluster: 100
+    marker_sets_gmt: null
+  pseudobulk:
+    min_cells: 20
+    min_cells_per_pseudobulk: 20
+    min_subjects_per_group: 2
+    min_total_counts: 1000
+    min_detected_genes: 200
+    extra_strata: []
+
+single_cell_integration:
+  enabled: false
+  method: harmony
+  gene_mapping_file: null
+  canonicalize_ensembl_versions: true
+  one_to_many_policy: drop_ambiguous
+  allow_cross_species: false
+  allow_scrna_snrna: false
+  min_shared_genes: 2000
+  min_shared_cell_types: 1
+  batch_key: dataset_id
+  harmony:
+    theta: 2.0
+    lambda: 1.0
+    max_iterations: 20
+  scvi:
+    n_latent: 30
+    n_layers: 2
+    n_hidden: 128
+    max_epochs: 400
+    batch_size: 128
+    early_stopping: true
+  seurat:
+    dims: 30
+    k_anchor: 5
+    script: workflow/scripts/run_seurat_integration.R
+  graph:
+    n_neighbors: 15
+    leiden_resolution: 1.0
+  quality:
+    marker_preservation_min_ratio: 0.5
+    dataset_dominance_fraction: 0.8
+    biological_conservation_min_ratio: 0.5
+    rare_cell_type_fraction: 0.01
+    silhouette_max_cells: 10000
+    lisi_enabled: false
+
+bulk_scrna_integration:
+  enabled: false
+  output_dir: results/integration
+  consensus_dir: results/consensus
+  gene_mapping_file: null
+  canonicalize_ensembl_versions: true
+  one_to_many_policy: report_unresolved
+  dominant_celltype_min_delta: 0.05
+  scoring_weights:
+    bulk_stat_score: 1.0
+    bulk_meta_score: 1.0
+    pseudobulk_score: 1.0
+    direction_consistency_score: 1.0
+    celltype_specificity_score: 1.0
+    cross_gse_score: 1.0
+    validation_score: 1.0
+    pathway_support_score: 0.0
+    loo_stability_score: 1.0
+  deconvolution:
+    enabled: false
+    build_signature_from_single_cell: false
+    method: nnls
+    min_signature_genes_per_celltype: 20
+
+multi_dataset:
+  enabled: false
+  dataset_plan_file: config/dataset_plan.tsv
+  default_strategy: null
+  prohibit_joint_model_when_dataset_group_confounded: true
+  validation_datasets_in_discovery_model: false
+  joint_model:
+    allow_author_counts: false
+    combat_seq:
+      enabled: false
+  meta:
+    method: random_effects
+    alpha: 0.05
+    min_studies: 2
+    loo_effect_change_threshold: 0.5
+  stratified_validation:
+    replication_alpha: 0.05
+    require_same_direction: true
+
+reporting:
+  enabled: false
+  formats:
+    - html
+  include_warnings: true
+  include_provenance: true
+  output_dir: results/reports
+  title: GEO RNA-seq mining report
+
+reproducibility:
+  random_seed: 20260701
+  record_software_versions: true
+  record_database_versions: true
+  record_reference_versions: true
+  record_file_checksums: true
+  checksum_algorithm: sha256

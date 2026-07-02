@@ -1,0 +1,2 @@
+analysis_id	dataset_id	include	role	merge_group	analysis_strategy	reference_dataset	notes
+analysis_primary	GSETEST	true	discovery	NA	independent_only	NA	Analyze this dataset independently

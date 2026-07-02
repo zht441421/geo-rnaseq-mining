@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contrasts.schema.json",
+  "title": "Reviewed contrast row",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contrast_id", "analysis_id", "data_scope", "numerator", "denominator",
+    "subset_column", "subset_value", "design_formula", "paired",
+    "min_replicates_per_group", "enabled", "notes"
+  ],
+  "properties": {
+    "contrast_id": {"type": "string", "minLength": 1, "not": {"const": "NA"}},
+    "analysis_id": {"type": "string", "minLength": 1, "not": {"const": "NA"}},
+    "data_scope": {
+      "type": "string",
+      "enum": [
+        "bulk", "scrna_pseudobulk", "bulk_meta", "scrna_meta",
+        "cell_proportion"
+      ]
+    },
+    "numerator": {"type": "string", "minLength": 1, "not": {"const": "NA"}},
+    "denominator": {"type": "string", "minLength": 1, "not": {"const": "NA"}},
+    "subset_column": {"type": "string"},
+    "subset_value": {"type": "string"},
+    "design_formula": {"type": "string", "minLength": 1, "not": {"const": "NA"}},
+    "paired": {"type": "boolean"},
+    "min_replicates_per_group": {"type": "integer", "minimum": 1},
+    "enabled": {"type": "boolean"},
+    "notes": {"type": "string"}
+  }
+}

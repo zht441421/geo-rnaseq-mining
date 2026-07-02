@@ -1,0 +1,19 @@
+name: geo-rnaseq-mining-r-bulk-analysis
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base=4.4
+  - bioconductor-deseq2
+  - bioconductor-tximport
+  - bioconductor-fgsea
+  - bioconductor-sva
+  - r-nnls
+  - r-survival
+  - r-optparse
+  - r-jsonlite
+  - r-yaml
+  - r-ggplot2
+  - r-pheatmap
+  - r-data.table

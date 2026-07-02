@@ -1,0 +1,11 @@
+name: geo-rnaseq-mining-r-bulk
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base=4.4
+  - bioconductor-geoquery
+  - bioconductor-deseq2
+  - r-optparse
+  - r-jsonlite

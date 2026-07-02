@@ -1,0 +1,777 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: geo-rnaseq-mining configuration
+type: object
+additionalProperties: false
+required:
+  - project
+  - geo
+  - metadata_review
+  - references
+  - resources
+  - validation
+  - data_entry
+  - bulk
+  - single_cell
+  - single_cell_integration
+  - bulk_scrna_integration
+  - multi_dataset
+  - reporting
+  - reproducibility
+properties:
+  project:
+    type: object
+  geo:
+    type: object
+  metadata_review:
+    type: object
+  references:
+    type: object
+  resources:
+    type: object
+  validation:
+    type: object
+  data_entry:
+    type: object
+  bulk:
+    type: object
+    required:
+      - enabled
+      - count_input_type
+      - quantification_method
+      - strandedness
+      - salmon_libtype
+      - featurecounts_strand
+      - salmon
+      - star
+      - featurecounts
+      - deseq2_alpha
+      - deseq2_abs_log2fc
+      - transformation
+      - outlier_z_threshold
+      - detected_gene_min_count
+      - enrichment
+      - optional_modules
+    properties:
+      enabled:
+        type: boolean
+      count_input_type:
+        const: raw_integer_counts
+      quantification_method:
+        enum:
+          - salmon_tximport
+          - star_featurecounts
+      strandedness:
+        enum:
+          - unstranded
+          - forward
+          - reverse
+      salmon_libtype:
+        type: string
+        minLength: 1
+      featurecounts_strand:
+        type: integer
+        enum: [0, 1, 2]
+      salmon:
+        type: object
+      star:
+        type: object
+      featurecounts:
+        type: object
+      deseq2_alpha:
+        type: number
+        exclusiveMinimum: 0
+        maximum: 1
+      deseq2_abs_log2fc:
+        type: number
+        minimum: 0
+      transformation:
+        enum:
+          - vst
+          - rlog
+      outlier_z_threshold:
+        type: number
+        exclusiveMinimum: 0
+      detected_gene_min_count:
+        type: integer
+        minimum: 1
+      enrichment:
+        type: object
+      optional_modules:
+        type: object
+        required:
+          - wgcna
+          - immune_infiltration
+          - gsva
+          - survival
+          - wgcna_settings
+          - immune_infiltration_settings
+          - gsva_settings
+          - survival_settings
+        properties:
+          wgcna:
+            type: boolean
+          immune_infiltration:
+            type: boolean
+          gsva:
+            type: boolean
+          survival:
+            type: boolean
+          wgcna_settings:
+            type: object
+            required: [soft_power, min_module_size]
+            properties:
+              soft_power:
+                type: number
+                exclusiveMinimum: 0
+              min_module_size:
+                type: integer
+                minimum: 2
+          immune_infiltration_settings:
+            type: object
+            required: [signature_matrix]
+            properties:
+              signature_matrix:
+                type: [string, "null"]
+          gsva_settings:
+            type: object
+            required: [gene_sets_gmt, method]
+            properties:
+              gene_sets_gmt:
+                type: [string, "null"]
+              method:
+                const: zscore
+          survival_settings:
+            type: object
+            required:
+              - metadata_file
+              - sample_id_column
+              - time_column
+              - event_column
+              - max_genes
+            properties:
+              metadata_file:
+                type: [string, "null"]
+              sample_id_column:
+                type: string
+                minLength: 1
+              time_column:
+                type: string
+                minLength: 1
+              event_column:
+                type: string
+                minLength: 1
+              max_genes:
+                type: integer
+                minimum: 1
+  single_cell:
+    type: object
+    additionalProperties: false
+    required:
+      - enabled
+      - downstream_analysis_enabled
+      - modalities
+      - pseudobulk_level
+      - pseudobulk_source
+      - allow_scrna_snrna_joint_analysis
+      - celltype_ontology_file
+      - count_layer
+      - rds_converter_script
+      - sample_id_column
+      - author_celltype_column
+      - cell_annotations_file
+      - mitochondrial_gene_prefixes
+      - qc
+      - scrublet
+      - doublet
+      - ambient_rna
+      - normalization
+      - clustering
+      - annotation
+      - pseudobulk
+    properties:
+      enabled:
+        type: boolean
+      downstream_analysis_enabled:
+        type: boolean
+      modalities:
+        type: array
+        items:
+          enum: [scrna, snrna]
+        uniqueItems: true
+      pseudobulk_level:
+        const: subject_id
+      pseudobulk_source:
+        const: raw_counts
+      allow_scrna_snrna_joint_analysis:
+        type: [boolean, "null"]
+      celltype_ontology_file:
+        type: string
+        minLength: 1
+      count_layer:
+        const: counts
+      rds_converter_script:
+        type: string
+        minLength: 1
+      sample_id_column:
+        type: string
+        minLength: 1
+      author_celltype_column:
+        type: string
+        minLength: 1
+      cell_annotations_file:
+        type: [string, "null"]
+      mitochondrial_gene_prefixes:
+        type: array
+        minItems: 1
+        items:
+          type: string
+      qc:
+        type: object
+        additionalProperties: false
+        required: [strategy, gene_prefixes, hard, mad]
+        properties:
+          strategy:
+            enum: [hard, mad, combined]
+          gene_prefixes:
+            type: object
+            additionalProperties: false
+            required: [ribosomal, hemoglobin]
+            properties:
+              ribosomal:
+                type: array
+                minItems: 1
+                items:
+                  type: string
+              hemoglobin:
+                type: array
+                minItems: 1
+                items:
+                  type: string
+          hard:
+            type: object
+            additionalProperties: false
+            required:
+              - min_genes
+              - max_genes
+              - min_counts
+              - max_counts
+              - max_pct_mt
+              - max_pct_ribo
+              - max_pct_hb
+              - min_complexity
+            properties:
+              min_genes:
+                type: integer
+                minimum: 0
+              max_genes:
+                type: integer
+                minimum: 1
+              min_counts:
+                type: number
+                minimum: 0
+              max_counts:
+                type: [number, "null"]
+                exclusiveMinimum: 0
+              max_pct_mt:
+                type: number
+                minimum: 0
+                maximum: 100
+              max_pct_ribo:
+                type: number
+                minimum: 0
+                maximum: 100
+              max_pct_hb:
+                type: number
+                minimum: 0
+                maximum: 100
+              min_complexity:
+                type: number
+                minimum: 0
+                maximum: 1
+          mad:
+            type: object
+            additionalProperties: false
+            required:
+              - enabled
+              - min_cells
+              - lower_n_mads
+              - upper_n_mads
+              - metrics
+            properties:
+              enabled:
+                type: boolean
+              min_cells:
+                type: integer
+                minimum: 3
+              lower_n_mads:
+                type: number
+                exclusiveMinimum: 0
+              upper_n_mads:
+                type: number
+                exclusiveMinimum: 0
+              metrics:
+                type: array
+                uniqueItems: true
+                items:
+                  enum:
+                    - total_counts
+                    - n_genes_by_counts
+                    - pct_counts_mt
+                    - pct_counts_ribo
+                    - pct_counts_hb
+                    - complexity
+      scrublet:
+        type: object
+        required: [enabled, expected_doublet_rate]
+        properties:
+          enabled:
+            type: boolean
+          expected_doublet_rate:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 1
+      doublet:
+        type: object
+        additionalProperties: false
+        required:
+          - enabled
+          - method
+          - exclude_predicted
+          - min_cells
+          - scrublet
+          - doubletdetection
+        properties:
+          enabled:
+            type: boolean
+          method:
+            enum: [scrublet, doubletdetection]
+          exclude_predicted:
+            type: boolean
+          min_cells:
+            type: integer
+            minimum: 2
+          scrublet:
+            type: object
+            additionalProperties: false
+            required: [expected_doublet_rate]
+            properties:
+              expected_doublet_rate:
+                type: number
+                exclusiveMinimum: 0
+                maximum: 1
+          doubletdetection:
+            type: object
+            additionalProperties: false
+            required:
+              - n_iterations
+              - pvalue_threshold
+              - voter_threshold
+            properties:
+              n_iterations:
+                type: integer
+                minimum: 1
+              pvalue_threshold:
+                type: number
+                exclusiveMinimum: 0
+                maximum: 1
+              voter_threshold:
+                type: number
+                minimum: 0
+                maximum: 1
+      ambient_rna:
+        type: object
+        additionalProperties: false
+        required: [method, low_count_quantile]
+        properties:
+          method:
+            enum: [none, low_count_profile]
+          low_count_quantile:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 0.5
+      normalization:
+        type: object
+        additionalProperties: false
+        required:
+          - target_sum
+          - highly_variable_genes
+          - pca_components
+          - hvg_flavor
+          - scale_max_value
+          - store_scaled_layer
+        properties:
+          target_sum:
+            type: number
+            exclusiveMinimum: 0
+          highly_variable_genes:
+            type: integer
+            minimum: 1
+          pca_components:
+            type: integer
+            minimum: 2
+          hvg_flavor:
+            enum: [seurat, cell_ranger]
+          scale_max_value:
+            type: number
+            exclusiveMinimum: 0
+          store_scaled_layer:
+            type: boolean
+      clustering:
+        type: object
+        additionalProperties: false
+        required: [n_neighbors, leiden_resolution]
+        properties:
+          n_neighbors:
+            type: integer
+            minimum: 2
+          leiden_resolution:
+            type: number
+            exclusiveMinimum: 0
+      annotation:
+        type: object
+        additionalProperties: false
+        required: [marker_test, markers_per_cluster, marker_sets_gmt]
+        properties:
+          marker_test:
+            enum: [wilcoxon, t-test, logreg]
+          markers_per_cluster:
+            type: integer
+            minimum: 1
+          marker_sets_gmt:
+            type: [string, "null"]
+      pseudobulk:
+        type: object
+        additionalProperties: false
+        required:
+          - min_cells
+          - min_cells_per_pseudobulk
+          - min_subjects_per_group
+          - min_total_counts
+          - min_detected_genes
+          - extra_strata
+        properties:
+          min_cells:
+            type: integer
+            minimum: 1
+          min_cells_per_pseudobulk:
+            type: integer
+            minimum: 1
+          min_subjects_per_group:
+            type: integer
+            minimum: 1
+          min_total_counts:
+            type: integer
+            minimum: 0
+          min_detected_genes:
+            type: integer
+            minimum: 0
+          extra_strata:
+            type: array
+            uniqueItems: true
+            items:
+              type: string
+              minLength: 1
+  single_cell_integration:
+    type: object
+    additionalProperties: false
+    required:
+      - enabled
+      - method
+      - gene_mapping_file
+      - canonicalize_ensembl_versions
+      - one_to_many_policy
+      - allow_cross_species
+      - allow_scrna_snrna
+      - min_shared_genes
+      - min_shared_cell_types
+      - batch_key
+      - harmony
+      - scvi
+      - seurat
+      - graph
+      - quality
+    properties:
+      enabled:
+        type: boolean
+      method:
+        enum: [harmony, scvi, seurat_rpca, seurat_cca]
+      gene_mapping_file:
+        type: [string, "null"]
+      canonicalize_ensembl_versions:
+        type: boolean
+      one_to_many_policy:
+        enum: [drop_ambiguous, reject]
+      allow_cross_species:
+        type: boolean
+      allow_scrna_snrna:
+        type: boolean
+      min_shared_genes:
+        type: integer
+        minimum: 2
+      min_shared_cell_types:
+        type: integer
+        minimum: 0
+      batch_key:
+        enum: [dataset_id, sample_id, batch]
+      harmony:
+        type: object
+        additionalProperties: false
+        required: [theta, lambda, max_iterations]
+        properties:
+          theta:
+            type: number
+            minimum: 0
+          lambda:
+            type: number
+            exclusiveMinimum: 0
+          max_iterations:
+            type: integer
+            minimum: 1
+      scvi:
+        type: object
+        additionalProperties: false
+        required:
+          - n_latent
+          - n_layers
+          - n_hidden
+          - max_epochs
+          - batch_size
+          - early_stopping
+        properties:
+          n_latent:
+            type: integer
+            minimum: 2
+          n_layers:
+            type: integer
+            minimum: 1
+          n_hidden:
+            type: integer
+            minimum: 8
+          max_epochs:
+            type: integer
+            minimum: 1
+          batch_size:
+            type: integer
+            minimum: 1
+          early_stopping:
+            type: boolean
+      seurat:
+        type: object
+        additionalProperties: false
+        required: [dims, k_anchor, script]
+        properties:
+          dims:
+            type: integer
+            minimum: 2
+          k_anchor:
+            type: integer
+            minimum: 1
+          script:
+            type: string
+            minLength: 1
+      graph:
+        type: object
+        additionalProperties: false
+        required: [n_neighbors, leiden_resolution]
+        properties:
+          n_neighbors:
+            type: integer
+            minimum: 2
+          leiden_resolution:
+            type: number
+            exclusiveMinimum: 0
+      quality:
+        type: object
+        additionalProperties: false
+        required:
+          - marker_preservation_min_ratio
+          - dataset_dominance_fraction
+          - biological_conservation_min_ratio
+          - rare_cell_type_fraction
+          - silhouette_max_cells
+          - lisi_enabled
+        properties:
+          marker_preservation_min_ratio:
+            type: number
+            minimum: 0
+            maximum: 1
+          dataset_dominance_fraction:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 1
+          biological_conservation_min_ratio:
+            type: number
+            minimum: 0
+            maximum: 1
+          rare_cell_type_fraction:
+            type: number
+            minimum: 0
+            maximum: 1
+          silhouette_max_cells:
+            type: integer
+            minimum: 10
+          lisi_enabled:
+            type: boolean
+  bulk_scrna_integration:
+    type: object
+    additionalProperties: false
+    required:
+      - enabled
+      - output_dir
+      - consensus_dir
+      - gene_mapping_file
+      - canonicalize_ensembl_versions
+      - one_to_many_policy
+      - dominant_celltype_min_delta
+      - scoring_weights
+      - deconvolution
+    properties:
+      enabled:
+        type: boolean
+      output_dir:
+        type: string
+        minLength: 1
+      consensus_dir:
+        type: string
+        minLength: 1
+      gene_mapping_file:
+        type: [string, "null"]
+      canonicalize_ensembl_versions:
+        type: boolean
+      one_to_many_policy:
+        enum: [report_unresolved, reject]
+      dominant_celltype_min_delta:
+        type: number
+        minimum: 0
+      scoring_weights:
+        type: object
+        additionalProperties:
+          type: number
+          minimum: 0
+        required:
+          - bulk_stat_score
+          - bulk_meta_score
+          - pseudobulk_score
+          - direction_consistency_score
+          - celltype_specificity_score
+          - cross_gse_score
+          - validation_score
+          - pathway_support_score
+          - loo_stability_score
+      deconvolution:
+        type: object
+        additionalProperties: false
+        required:
+          - enabled
+          - build_signature_from_single_cell
+          - method
+          - min_signature_genes_per_celltype
+        properties:
+          enabled:
+            type: boolean
+          build_signature_from_single_cell:
+            type: boolean
+          method:
+            enum: [nnls, cibersortx_export]
+          min_signature_genes_per_celltype:
+            type: integer
+            minimum: 1
+  multi_dataset:
+    type: object
+    required:
+      - enabled
+      - dataset_plan_file
+      - default_strategy
+      - prohibit_joint_model_when_dataset_group_confounded
+      - validation_datasets_in_discovery_model
+      - joint_model
+      - meta
+      - stratified_validation
+    properties:
+      enabled:
+        type: boolean
+      dataset_plan_file:
+        type: string
+        minLength: 1
+      default_strategy:
+        type: [string, "null"]
+      prohibit_joint_model_when_dataset_group_confounded:
+        const: true
+      validation_datasets_in_discovery_model:
+        const: false
+      joint_model:
+        type: object
+        required: [allow_author_counts, combat_seq]
+        properties:
+          allow_author_counts:
+            type: boolean
+          combat_seq:
+            type: object
+            required: [enabled]
+            properties:
+              enabled:
+                type: boolean
+      meta:
+        type: object
+        required:
+          - method
+          - alpha
+          - min_studies
+          - loo_effect_change_threshold
+        properties:
+          method:
+            enum:
+              - fixed_effect
+              - random_effects
+              - fisher
+              - weighted_stouffer
+              - robust_rank_aggregation
+          alpha:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 1
+          min_studies:
+            type: integer
+            minimum: 1
+          loo_effect_change_threshold:
+            type: number
+            minimum: 0
+      stratified_validation:
+        type: object
+        required: [replication_alpha, require_same_direction]
+        properties:
+          replication_alpha:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 1
+          require_same_direction:
+            type: boolean
+  reporting:
+    type: object
+    required:
+      - enabled
+      - formats
+      - include_warnings
+      - include_provenance
+      - output_dir
+      - title
+    properties:
+      enabled:
+        type: boolean
+      formats:
+        type: array
+        minItems: 1
+        items:
+          enum: [html]
+      include_warnings:
+        type: boolean
+      include_provenance:
+        type: boolean
+      output_dir:
+        type: string
+        minLength: 1
+      title:
+        type: string
+        minLength: 1
+  reproducibility:
+    type: object

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "celltype_ontology.schema.json",
+  "title": "Reviewed cell-type ontology mapping row",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "dataset_id", "author_label", "harmonized_level1", "harmonized_level2",
+    "harmonized_level3", "mapping_method", "confidence", "review_status",
+    "notes"
+  ],
+  "properties": {
+    "dataset_id": {"type": "string", "minLength": 1, "not": {"const": "NA"}},
+    "author_label": {"type": "string", "minLength": 1, "not": {"const": "NA"}},
+    "harmonized_level1": {"type": "string"},
+    "harmonized_level2": {"type": "string"},
+    "harmonized_level3": {"type": "string"},
+    "mapping_method": {"type": "string", "minLength": 1},
+    "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+    "review_status": {
+      "type": "string",
+      "enum": ["pending", "confirmed", "excluded"]
+    },
+    "notes": {"type": "string"}
+  }
+}

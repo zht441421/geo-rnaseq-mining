@@ -1,0 +1,2 @@
+dataset_id	author_label	harmonized_level1	harmonized_level2	harmonized_level3	mapping_method	confidence	review_status	notes
+GSETEST	CD4 T cell	Immune cell	T cell	CD4 T cell	manual_author_review	high	confirmed	Author label preserved verbatim
