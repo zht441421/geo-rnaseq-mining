@@ -2,6 +2,38 @@
 
 所有日期使用 Asia/Shanghai 时区。按最新记录在前的顺序维护。
 
+## 2026-07-02 — Snakemake/Git 修复阶段交接复核
+
+### 新增与删除文件
+
+- 无。
+
+### 修改文件
+
+- `docs/CURRENT_STATE.md`
+- `docs/CHANGELOG.md`
+- `docs/NEXT_TASK.md`
+
+### 接口、配置与决策变化
+
+- 复核确认系统 Python 可运行 Snakemake 8.30.0。
+- 复核确认首个 Git commit 已建立，当前记录的 HEAD 为 `b8b0aa3`。
+- 复核确认 `work/` 和 `outputs/` 被根目录 `.gitignore` 忽略且未进入 Git 跟踪。
+- 未产生新的用户确认分析决策；`docs/DECISIONS.md` 保持不变。
+- 未启动真实数据最终报告或下一阶段开发。
+
+### 测试变化
+
+- 离线单元测试 118 项通过。
+- 离线数据入口集成测试 1 项通过。
+- 系统 Python Snakemake dry-run 通过。
+- `python -m snakemake --version` 通过，返回 `8.30.0`。
+- Git 忽略和跟踪检查通过：`work/`、`outputs/` 未被跟踪。
+
+### 仍未运行
+
+- 未运行真实数据最终报告目标；缺少真实人工确认 authority、gene mapping 和真实分析结果。
+
 ## 2026-07-02 — 修复系统 Snakemake 入口并初始化 Git 状态
 
 ### 新增与删除文件

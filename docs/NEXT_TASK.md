@@ -2,7 +2,7 @@
 
 - **task_id**：FINAL-REPORT-RUN-001
 - **状态**：blocked_external_input；等待真实结果、人工确认 authority 和 gene mapping 后启动
-- **最后复核**：2026-07-02；最终报告、审计和可复现性模块实现、复核、测试和阶段交接完成
+- **最后复核**：2026-07-02；系统 Snakemake/Git 初始化修复已复核，真实报告运行仍等待外部输入
 
 ## 当前目标
 
@@ -75,3 +75,4 @@ python -m unittest discover -s tests/integration -p "test_data_entry_pipeline.py
 - 真实联合分析、pseudobulk、Meta 和 integration 输出尚未运行或审阅。
 - 本阶段测试使用合成 fixture 和 CLI smoke test，不代表真实数据最终报告已经通过。
 - 系统 Python 已安装 Snakemake 8.30.0；项目环境中的 Snakemake 也可用。
+- 仓库已建立首个 commit；下一阶段开始前仍应先检查 `git status`，确认是否存在交接文档的未提交修改。

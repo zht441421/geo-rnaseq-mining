@@ -1,12 +1,12 @@
 # 当前项目状态
 
-最后更新：2026-07-02（Asia/Shanghai）；最终报告、审计和可复现性模块阶段交接完成。
+最后更新：2026-07-02（Asia/Shanghai）；系统 Snakemake/Git 初始化修复后的阶段交接复核完成。
 
 本文档只记录已从代码、实际文件或命令验证的事实。合成 fixture、单元测试或烟雾测试通过不代表真实 GSE 数据分析已经通过。
 
 ## 当前阶段
 
-最终报告、审计和可复现性模块。
+最终报告、审计和可复现性模块已实现；当前完成的是系统 Snakemake 入口和 Git 初始化修复的阶段交接。
 
 ## 已完成内容
 
@@ -33,6 +33,7 @@
 - 系统 Python 已安装并验证 Snakemake 8.30.0；`python -m snakemake --version` 不再因
   `No module named snakemake` 失败。
 - 根目录新增 `.gitignore`，忽略本地工具链和生成目录 `work/`、`outputs/`，避免把项目环境或分析产物纳入首个提交。
+- 已建立首个 Git commit，仓库不再是 unborn branch。
 
 ## 未完成内容
 
@@ -76,19 +77,19 @@ OK
 
 ```text
 python -m unittest discover -s tests/unit -p "test_*.py" -v
-Ran 118 tests in 22.558s
+Ran 118 tests in 10.792s
 OK
 ```
 
 ```text
 python -m unittest discover -s tests/integration -p "test_data_entry_pipeline.py" -v
-Ran 1 test in 1.155s
+Ran 1 test in 0.739s
 OK
 ```
 
 ```text
-C:\Users\zht44\Documents\WORK FLOW\work\tools\envs\geo-rnaseq-mining\python.exe -m snakemake \
-  --snakefile workflow/Snakefile --directory . --configfile config/config.yaml --dry-run --cores 1 --quiet
+python -m snakemake --snakefile workflow/Snakefile --directory . \
+  --configfile config/config.yaml --dry-run --cores 1 --quiet
 host: DESKTOP-0CSC9AV
 exit code 0
 ```
@@ -108,6 +109,17 @@ exit code 0
 git check-ignore -v work outputs
 .gitignore:2:work/    work
 .gitignore:3:outputs/ outputs
+exit code 0
+```
+
+```text
+git ls-files work outputs
+exit code 0; no tracked work/ or outputs/ files
+```
+
+```text
+git rev-parse --short HEAD
+b8b0aa3
 exit code 0
 ```
 
@@ -139,9 +151,10 @@ exit code 0
 
 - 仓库根目录：`C:\Users\zht44\Documents\WORK FLOW`
 - 当前分支：`master`
-- 当前 commit：本次修复会建立首个 Git commit；最终 HEAD 以 `git rev-parse --short HEAD` 为准。
+- 当前 commit：`b8b0aa3`（`Initialize geo RNA-seq mining workflow`）。
 - 工作区状态：`work/` 和 `outputs/` 已由根目录 `.gitignore` 忽略，不纳入版本控制。
-- 本次修复后仓库不再是 unborn branch。
+- 本次交接文档更新应单独提交；提交后工作区应保持干净。
+- 仓库不再是 unborn branch。
 
 ## 下一步应该执行的任务
 
