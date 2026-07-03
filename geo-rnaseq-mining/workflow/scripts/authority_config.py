@@ -129,6 +129,11 @@ def sha256_file(path):
     return digest.hexdigest()
 
 
+def sha256_or_missing(path):
+    path = Path(path)
+    return sha256_file(path) if path.is_file() else "MISSING"
+
+
 def issue(code, table, path, line, field, value, reason, action):
     return ValidationIssue(
         code=code,
@@ -450,16 +455,30 @@ def cross_validate(tables, paths):
 def validate_authority_files(paths, schema_dir):
     paths = {name: Path(path) for name, path in paths.items()}
     schema_dir = Path(schema_dir)
-    before_hashes = {name: sha256_file(path) for name, path in paths.items()}
+    before_hashes = {name: sha256_or_missing(path) for name, path in paths.items()}
     tables = {}
     issues = []
     for table, table_path in paths.items():
         schema = load_schema(schema_dir / TABLE_SPECS[table]["schema"])
-        rows, table_issues = read_table(table, table_path, schema)
+        if not table_path.is_file():
+            rows, table_issues = [], [
+                issue(
+                    "MISSING_AUTHORITY_FILE",
+                    table,
+                    table_path,
+                    0,
+                    "<file>",
+                    "",
+                    "The reviewed authority file does not exist.",
+                    "Create the reviewed TSV from the project template, complete human review, and rerun validation.",
+                )
+            ]
+        else:
+            rows, table_issues = read_table(table, table_path, schema)
         tables[table] = rows
         issues.extend(table_issues)
     issues.extend(cross_validate(tables, paths))
-    after_hashes = {name: sha256_file(path) for name, path in paths.items()}
+    after_hashes = {name: sha256_or_missing(path) for name, path in paths.items()}
     for table in paths:
         if before_hashes[table] != after_hashes[table]:
             issues.append(

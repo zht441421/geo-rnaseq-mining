@@ -11,8 +11,7 @@ CELLTYPE_METRICS_ARG = (
 
 rule validate_manifest:
     input:
-        authority=rules.validate_authority_config.output.report,
-        manifest="metadata/reviewed/sample_manifest.tsv"
+        authority=rules.validate_authority_config.output.report
     output:
         validated=f"{COMPATIBILITY_DIR}/validated_manifest.tsv",
         errors=f"{COMPATIBILITY_DIR}/manifest_errors.tsv",
@@ -29,10 +28,12 @@ rule validate_manifest:
         mem_mb=config["resources"]["default"]["mem_mb"],
         runtime_min=config["resources"]["default"]["runtime_min"],
         disk_mb=config["resources"]["default"]["disk_mb"]
+    params:
+        manifest=AUTHORITY_SAMPLE_MANIFEST
     shell:
         """
         python workflow/scripts/validate_manifest.py \
-          --manifest {input.manifest:q} \
+          --manifest {params.manifest:q} \
           --project-root . \
           --validated-manifest {output.validated:q} \
           --errors {output.errors:q} \
@@ -44,10 +45,7 @@ rule validate_manifest:
 
 rule validate_contrasts:
     input:
-        authority=rules.validate_authority_config.output.report,
-        manifest="metadata/reviewed/sample_manifest.tsv",
-        contrasts="config/contrasts.tsv",
-        dataset_plan="config/dataset_plan.tsv"
+        authority=rules.validate_authority_config.output.report
     output:
         validation=f"{COMPATIBILITY_DIR}/contrast_validation.tsv"
     log:
@@ -61,12 +59,16 @@ rule validate_contrasts:
         mem_mb=config["resources"]["default"]["mem_mb"],
         runtime_min=config["resources"]["default"]["runtime_min"],
         disk_mb=config["resources"]["default"]["disk_mb"]
+    params:
+        manifest=AUTHORITY_SAMPLE_MANIFEST,
+        contrasts=AUTHORITY_CONTRASTS,
+        dataset_plan=AUTHORITY_DATASET_PLAN
     shell:
         """
         python workflow/scripts/validate_contrasts.py \
-          --manifest {input.manifest:q} \
-          --contrasts {input.contrasts:q} \
-          --dataset-plan {input.dataset_plan:q} \
+          --manifest {params.manifest:q} \
+          --contrasts {params.contrasts:q} \
+          --dataset-plan {params.dataset_plan:q} \
           --output {output.validation:q} \
           > {log:q} 2>&1
         """
@@ -75,10 +77,7 @@ rule validate_contrasts:
 rule validate_dataset_plan:
     input:
         authority=rules.validate_authority_config.output.report,
-        config="config/config.yaml",
-        manifest="metadata/reviewed/sample_manifest.tsv",
-        contrasts="config/contrasts.tsv",
-        dataset_plan="config/dataset_plan.tsv"
+        config="config/config.yaml"
     output:
         validation=f"{COMPATIBILITY_DIR}/dataset_plan_validation.tsv"
     log:
@@ -92,13 +91,17 @@ rule validate_dataset_plan:
         mem_mb=config["resources"]["default"]["mem_mb"],
         runtime_min=config["resources"]["default"]["runtime_min"],
         disk_mb=config["resources"]["default"]["disk_mb"]
+    params:
+        manifest=AUTHORITY_SAMPLE_MANIFEST,
+        contrasts=AUTHORITY_CONTRASTS,
+        dataset_plan=AUTHORITY_DATASET_PLAN
     shell:
         """
         python workflow/scripts/validate_dataset_plan.py \
           --config {input.config:q} \
-          --manifest {input.manifest:q} \
-          --contrasts {input.contrasts:q} \
-          --dataset-plan {input.dataset_plan:q} \
+          --manifest {params.manifest:q} \
+          --contrasts {params.contrasts:q} \
+          --dataset-plan {params.dataset_plan:q} \
           --output {output.validation:q} \
           > {log:q} 2>&1
         """
@@ -108,10 +111,6 @@ rule validate_celltype_ontology:
     input:
         authority=rules.validate_authority_config.output.report,
         config="config/config.yaml",
-        manifest="metadata/reviewed/sample_manifest.tsv",
-        contrasts="config/contrasts.tsv",
-        dataset_plan="config/dataset_plan.tsv",
-        ontology="config/celltype_ontology.tsv",
         metrics=CELLTYPE_METRICS_INPUT
     output:
         validation=f"{COMPATIBILITY_DIR}/celltype_ontology_validation.tsv"
@@ -127,15 +126,19 @@ rule validate_celltype_ontology:
         runtime_min=config["resources"]["default"]["runtime_min"],
         disk_mb=config["resources"]["default"]["disk_mb"]
     params:
-        metrics_arg=CELLTYPE_METRICS_ARG
+        metrics_arg=CELLTYPE_METRICS_ARG,
+        manifest=AUTHORITY_SAMPLE_MANIFEST,
+        contrasts=AUTHORITY_CONTRASTS,
+        dataset_plan=AUTHORITY_DATASET_PLAN,
+        ontology=AUTHORITY_CELLTYPE_ONTOLOGY
     shell:
         """
         python workflow/scripts/validate_celltype_ontology.py \
           --config {input.config:q} \
-          --manifest {input.manifest:q} \
-          --contrasts {input.contrasts:q} \
-          --dataset-plan {input.dataset_plan:q} \
-          --ontology {input.ontology:q} \
+          --manifest {params.manifest:q} \
+          --contrasts {params.contrasts:q} \
+          --dataset-plan {params.dataset_plan:q} \
+          --ontology {params.ontology:q} \
           {params.metrics_arg} \
           --output {output.validation:q} \
           > {log:q} 2>&1
@@ -145,10 +148,7 @@ rule validate_celltype_ontology:
 rule validate_analysis_design:
     input:
         authority=rules.validate_authority_config.output.report,
-        config="config/config.yaml",
-        manifest="metadata/reviewed/sample_manifest.tsv",
-        contrasts="config/contrasts.tsv",
-        dataset_plan="config/dataset_plan.tsv"
+        config="config/config.yaml"
     output:
         validation=f"{COMPATIBILITY_DIR}/design_matrix_validation.tsv",
         crosstab=f"{COMPATIBILITY_DIR}/dataset_group_crosstab.tsv"
@@ -163,13 +163,17 @@ rule validate_analysis_design:
         mem_mb=config["resources"]["default"]["mem_mb"],
         runtime_min=config["resources"]["default"]["runtime_min"],
         disk_mb=config["resources"]["default"]["disk_mb"]
+    params:
+        manifest=AUTHORITY_SAMPLE_MANIFEST,
+        contrasts=AUTHORITY_CONTRASTS,
+        dataset_plan=AUTHORITY_DATASET_PLAN
     shell:
         """
         python workflow/scripts/validate_analysis_design.py \
           --config {input.config:q} \
-          --manifest {input.manifest:q} \
-          --contrasts {input.contrasts:q} \
-          --dataset-plan {input.dataset_plan:q} \
+          --manifest {params.manifest:q} \
+          --contrasts {params.contrasts:q} \
+          --dataset-plan {params.dataset_plan:q} \
           --design-validation {output.validation:q} \
           --crosstab {output.crosstab:q} \
           > {log:q} 2>&1
@@ -187,8 +191,7 @@ rule generate_validation_report:
         dataset_plan_validation=rules.validate_dataset_plan.output.validation,
         celltype=rules.validate_celltype_ontology.output.validation,
         design=rules.validate_analysis_design.output.validation,
-        crosstab=rules.validate_analysis_design.output.crosstab,
-        dataset_plan="config/dataset_plan.tsv"
+        crosstab=rules.validate_analysis_design.output.crosstab
     output:
         report=f"{COMPATIBILITY_DIR}/validation_report.html",
         status=VALIDATION_STATUS
@@ -203,12 +206,14 @@ rule generate_validation_report:
         mem_mb=config["resources"]["default"]["mem_mb"],
         runtime_min=config["resources"]["default"]["runtime_min"],
         disk_mb=config["resources"]["default"]["disk_mb"]
+    params:
+        dataset_plan=AUTHORITY_DATASET_PLAN
     shell:
         """
         python workflow/scripts/generate_preanalysis_validation_report.py \
           --authority-report {input.authority:q} \
           --validated-manifest {input.validated:q} \
-          --dataset-plan {input.dataset_plan:q} \
+          --dataset-plan {params.dataset_plan:q} \
           --crosstab {input.crosstab:q} \
           --issue-files {input.manifest_errors:q} {input.manifest_warnings:q} \
                         {input.identities:q} {input.contrasts:q} \

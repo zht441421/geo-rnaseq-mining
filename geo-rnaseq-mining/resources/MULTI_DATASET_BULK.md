@@ -2,8 +2,8 @@
 
 ## 权威输入
 
-- `config/dataset_plan.tsv` 是策略、dataset role 和纳入状态的唯一来源。
-- `config/contrasts.tsv` 是比较方向和 design formula 的唯一来源。
+- `metadata/reviewed/dataset_plan.tsv` 是策略、dataset role 和纳入状态的唯一来源。
+- `metadata/reviewed/contrasts.tsv` 是比较方向和 design formula 的唯一来源。
 - 程序只评估技术可行性，不会把 `joint_model` 自动改成 Meta，也不会反向修改权威文件。
 - 每个纳入 GSE 必须先完成 `results/per_dataset/{dataset_id}/bulk/.complete`。
 
@@ -19,7 +19,7 @@
 ```yaml
 multi_dataset:
   enabled: true
-  dataset_plan_file: config/dataset_plan.tsv
+  dataset_plan_file: metadata/reviewed/dataset_plan.tsv
   default_strategy: null
   prohibit_joint_model_when_dataset_group_confounded: true
   validation_datasets_in_discovery_model: false

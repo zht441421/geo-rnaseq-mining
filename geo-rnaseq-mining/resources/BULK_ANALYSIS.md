@@ -20,8 +20,8 @@ meet all of these conditions:
 
 Set `bulk.enabled: true` only after the reviewed manifest, contrasts, and
 dataset plan pass the pre-analysis gate. Every enabled bulk contrast must come
-from `config/contrasts.tsv`, and its `analysis_id` must map to the dataset in
-`config/dataset_plan.tsv`.
+from `metadata/reviewed/contrasts.tsv`, and its `analysis_id` must map to the
+dataset in `metadata/reviewed/dataset_plan.tsv`.
 
 The workflow never changes `include`, `group`, `subject_id`, pairing, batch, or
 contrast direction. Outliers remain in every derived matrix until the user

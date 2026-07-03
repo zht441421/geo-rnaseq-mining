@@ -83,6 +83,11 @@ class AuthorityConfigTests(unittest.TestCase):
         self.assertEqual(1, result["report"]["excluded_samples_preserved"])
         self.assertEqual("CD4 T cell", result["tables"]["celltype_ontology"][0]["author_label"])
 
+    def test_missing_authority_file_is_reported_explicitly(self):
+        self.paths["contrasts"].unlink()
+        error = self.assert_error_code("MISSING_AUTHORITY_FILE")
+        self.assertEqual("MISSING", error.report["source_sha256"]["contrasts"])
+
     def test_include_true_requires_confirmed_status(self):
         def transform(rows):
             rows[0]["review_status"] = "pending"

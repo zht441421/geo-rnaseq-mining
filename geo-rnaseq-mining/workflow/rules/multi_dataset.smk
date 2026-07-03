@@ -84,9 +84,9 @@ rule assess_dataset_compatibility:
             dataset=MULTI_DATASETS,
         ),
         config="config/config.yaml",
-        manifest="metadata/reviewed/sample_manifest.tsv",
+        manifest=AUTHORITY_SAMPLE_MANIFEST,
         dataset_plan=MULTI_PLAN_FILE,
-        contrasts="config/contrasts.tsv",
+        contrasts=AUTHORITY_CONTRASTS,
         geo_samples=rules.fetch_geo_metadata.output.samples,
         sra_runinfo=rules.fetch_sra_runinfo.output.runinfo
     output:
@@ -120,9 +120,9 @@ rule prepare_joint_bulk:
         datasets=analysis_dataset_markers,
         compatibility=rules.assess_dataset_compatibility.output.compatibility,
         config="config/config.yaml",
-        manifest="metadata/reviewed/sample_manifest.tsv",
+        manifest=AUTHORITY_SAMPLE_MANIFEST,
         dataset_plan=MULTI_PLAN_FILE,
-        contrasts="config/contrasts.tsv"
+        contrasts=AUTHORITY_CONTRASTS
     output:
         counts=f"{MERGED_BULK_ROOT}/{{analysis}}/joint_model/input/raw_counts.tsv",
         metadata=f"{MERGED_BULK_ROOT}/{{analysis}}/joint_model/input/sample_metadata.tsv",
@@ -161,7 +161,7 @@ rule bulk_joint_model:
         validation=rules.prepare_joint_bulk.output.validation,
         config="config/config.yaml",
         dataset_plan=MULTI_PLAN_FILE,
-        contrasts="config/contrasts.tsv"
+        contrasts=AUTHORITY_CONTRASTS
     output:
         marker=f"{MERGED_BULK_ROOT}/{{analysis}}/joint_model/.complete",
         manifest=f"{MERGED_BULK_ROOT}/{{analysis}}/joint_model/results_manifest.tsv",
@@ -199,7 +199,7 @@ rule bulk_per_dataset_meta:
         compatibility=rules.assess_dataset_compatibility.output.compatibility,
         config="config/config.yaml",
         dataset_plan=MULTI_PLAN_FILE,
-        contrasts="config/contrasts.tsv"
+        contrasts=AUTHORITY_CONTRASTS
     output:
         marker=f"{META_BULK_ROOT}/{{analysis}}/per_dataset_meta/.complete",
         manifest=f"{META_BULK_ROOT}/{{analysis}}/per_dataset_meta/results_manifest.tsv",
@@ -239,7 +239,7 @@ rule bulk_stratified_validation:
         compatibility=rules.assess_dataset_compatibility.output.compatibility,
         config="config/config.yaml",
         dataset_plan=MULTI_PLAN_FILE,
-        contrasts="config/contrasts.tsv"
+        contrasts=AUTHORITY_CONTRASTS
     output:
         marker=f"{META_BULK_ROOT}/{{analysis}}/stratified_validation/.complete",
         manifest=f"{META_BULK_ROOT}/{{analysis}}/stratified_validation/results_manifest.tsv",

@@ -111,10 +111,10 @@ rule snapshot_reporting_parameters:
 rule build_audit_trail:
     input:
         config="config/config.yaml",
-        manifest="metadata/reviewed/sample_manifest.tsv",
-        contrasts="config/contrasts.tsv",
-        dataset_plan="config/dataset_plan.tsv",
-        ontology="config/celltype_ontology.tsv",
+        manifest=AUTHORITY_SAMPLE_MANIFEST,
+        contrasts=AUTHORITY_CONTRASTS,
+        dataset_plan=AUTHORITY_DATASET_PLAN,
+        ontology=AUTHORITY_CELLTYPE_ONTOLOGY,
         manifest_issues=rules.validate_manifest.output.errors,
         manifest_warnings=rules.validate_manifest.output.warnings,
         contrast_issues=rules.validate_contrasts.output.validation,
@@ -155,9 +155,9 @@ rule build_audit_trail:
 rule render_analysis_report:
     input:
         config="config/config.yaml",
-        manifest="metadata/reviewed/sample_manifest.tsv",
-        contrasts="config/contrasts.tsv",
-        dataset_plan="config/dataset_plan.tsv",
+        manifest=AUTHORITY_SAMPLE_MANIFEST,
+        contrasts=AUTHORITY_CONTRASTS,
+        dataset_plan=AUTHORITY_DATASET_PLAN,
         warnings=rules.build_audit_trail.output.warnings,
         exclusions=rules.build_audit_trail.output.exclusions,
         audit=rules.build_audit_trail.output.audit,

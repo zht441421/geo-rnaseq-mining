@@ -43,7 +43,7 @@ class ProjectSkeletonTests(unittest.TestCase):
                 "data_type",
                 "review_status",
             },
-            "config/contrasts.tsv": {
+            "metadata/reviewed/contrasts.tsv": {
                 "contrast_id",
                 "analysis_id",
                 "numerator",
@@ -51,14 +51,14 @@ class ProjectSkeletonTests(unittest.TestCase):
                 "design_formula",
                 "paired",
             },
-            "config/dataset_plan.tsv": {
+            "metadata/reviewed/dataset_plan.tsv": {
                 "analysis_id",
                 "dataset_id",
                 "include",
                 "role",
                 "analysis_strategy",
             },
-            "config/celltype_ontology.tsv": {
+            "metadata/reviewed/celltype_ontology.tsv": {
                 "dataset_id",
                 "author_label",
                 "harmonized_level1",
@@ -77,14 +77,53 @@ class ProjectSkeletonTests(unittest.TestCase):
     def test_templates_keep_manual_decisions_unresolved(self):
         authority_paths = (
             PROJECT_ROOT / "metadata" / "reviewed" / "sample_manifest.tsv",
-            PROJECT_ROOT / "config" / "contrasts.tsv",
-            PROJECT_ROOT / "config" / "dataset_plan.tsv",
-            PROJECT_ROOT / "config" / "celltype_ontology.tsv",
+            PROJECT_ROOT / "metadata" / "reviewed" / "contrasts.tsv",
+            PROJECT_ROOT / "metadata" / "reviewed" / "dataset_plan.tsv",
+            PROJECT_ROOT / "metadata" / "reviewed" / "celltype_ontology.tsv",
         )
         for path in authority_paths:
             with self.subTest(path=path):
                 with path.open(encoding="utf-8", newline="") as handle:
                     self.assertEqual([], list(csv.DictReader(handle, delimiter="\t")))
+
+    def test_formal_authority_paths_use_reviewed_metadata(self):
+        with (PROJECT_ROOT / "config" / "config.yaml").open(
+            encoding="utf-8"
+        ) as handle:
+            config = yaml.safe_load(handle)
+        self.assertEqual(
+            "metadata/reviewed/celltype_ontology.tsv",
+            config["single_cell"]["celltype_ontology_file"],
+        )
+        self.assertEqual(
+            "metadata/reviewed/dataset_plan.tsv",
+            config["multi_dataset"]["dataset_plan_file"],
+        )
+
+        common_rules = (
+            PROJECT_ROOT / "workflow" / "rules" / "common.smk"
+        ).read_text(encoding="utf-8")
+        self.assertIn('AUTHORITY_CONTRASTS = "metadata/reviewed/contrasts.tsv"', common_rules)
+
+        formal_sources = "\n".join(
+            (PROJECT_ROOT / relative_path).read_text(encoding="utf-8")
+            for relative_path in (
+                "workflow/rules/bulk.smk",
+                "workflow/rules/common.smk",
+                "workflow/rules/integration.smk",
+                "workflow/rules/multi_dataset.smk",
+                "workflow/rules/reporting.smk",
+                "workflow/rules/single_cell.smk",
+                "workflow/rules/validation.smk",
+            )
+        )
+        for legacy_path in (
+            "config/contrasts.tsv",
+            "config/dataset_plan.tsv",
+            "config/celltype_ontology.tsv",
+        ):
+            with self.subTest(path=legacy_path):
+                self.assertNotIn(legacy_path, formal_sources)
 
     def test_snakefile_includes_module_skeletons(self):
         snakefile = (PROJECT_ROOT / "workflow" / "Snakefile").read_text(

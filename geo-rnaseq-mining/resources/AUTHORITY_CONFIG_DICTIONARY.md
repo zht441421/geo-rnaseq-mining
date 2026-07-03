@@ -3,9 +3,9 @@
 These four TSV files are the only authoritative inputs for formal analysis:
 
 1. `metadata/reviewed/sample_manifest.tsv`
-2. `config/contrasts.tsv`
-3. `config/dataset_plan.tsv`
-4. `config/celltype_ontology.tsv`
+2. `metadata/reviewed/contrasts.tsv`
+3. `metadata/reviewed/dataset_plan.tsv`
+4. `metadata/reviewed/celltype_ontology.tsv`
 
 The validator reads them as UTF-8 TSV, requires the exact ordered headers, rejects
 extra columns and surrounding whitespace, and verifies that file SHA-256 values do
@@ -127,7 +127,7 @@ Suggested action: Assign unique reviewed identifiers; excluded rows must remain 
 ```
 
 ```text
-[IDENTICAL_CONTRAST_GROUPS] config/contrasts.tsv:2 field='numerator,denominator'
+[IDENTICAL_CONTRAST_GROUPS] metadata/reviewed/contrasts.tsv:2 field='numerator,denominator'
 value='case': Numerator and denominator must be different.
 Suggested action: Confirm contrast direction and enter two distinct group labels.
 ```

@@ -176,7 +176,7 @@ single_cell:
   pseudobulk_level: subject_id
   pseudobulk_source: raw_counts
   allow_scrna_snrna_joint_analysis: null
-  celltype_ontology_file: config/celltype_ontology.tsv
+  celltype_ontology_file: metadata/reviewed/celltype_ontology.tsv
   count_layer: counts
   rds_converter_script: workflow/scripts/convert_single_cell_rds.R
   sample_id_column: sample_id
@@ -318,7 +318,7 @@ bulk_scrna_integration:
 
 multi_dataset:
   enabled: false
-  dataset_plan_file: config/dataset_plan.tsv
+  dataset_plan_file: metadata/reviewed/dataset_plan.tsv
   default_strategy: null
   prohibit_joint_model_when_dataset_group_confounded: true
   validation_datasets_in_discovery_model: false

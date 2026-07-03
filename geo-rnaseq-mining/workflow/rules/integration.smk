@@ -25,7 +25,7 @@ BULK_SCRNA_INTEGRATION_TARGETS = (
 rule bulk_scrna_integration:
     input:
         config="config/config.yaml",
-        ontology="config/celltype_ontology.tsv"
+        ontology=AUTHORITY_CELLTYPE_ONTOLOGY
     output:
         marker=f"{BULK_SCRNA_INTEGRATION_ROOT}/.complete",
         consensus_marker=f"{BULK_SCRNA_CONSENSUS_ROOT}/.complete",

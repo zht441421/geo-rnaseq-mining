@@ -559,8 +559,8 @@ rule bulk_deseq2:
         metadata=rules.prepare_bulk_dataset.output.metadata,
         qc=rules.bulk_sample_qc.output.marker,
         config="config/config.yaml",
-        contrasts="config/contrasts.tsv",
-        dataset_plan="config/dataset_plan.tsv"
+        contrasts=AUTHORITY_CONTRASTS,
+        dataset_plan=AUTHORITY_DATASET_PLAN
     output:
         marker=f"{BULK_RESULT_ROOT}/{{dataset}}/bulk/deseq2/.complete",
         manifest=f"{BULK_RESULT_ROOT}/{{dataset}}/bulk/deseq2/results_manifest.tsv",

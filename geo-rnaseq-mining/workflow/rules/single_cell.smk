@@ -118,7 +118,7 @@ rule preprocess_single_cell_dataset:
         gate=rules.enforce_validation_gate.output.marker,
         entries=single_cell_input_paths,
         config="config/config.yaml",
-        manifest=config["geo"]["metadata_reviewed_file"]
+        manifest=AUTHORITY_SAMPLE_MANIFEST
     output:
         marker=f"{SINGLE_CELL_ROOT}/{{dataset}}/single_cell/preprocessing/.complete",
         pre_qc=f"{SINGLE_CELL_ROOT}/{{dataset}}/single_cell/objects/pre_qc.h5ad",
@@ -215,8 +215,8 @@ rule single_cell_pseudobulk_deseq2:
         metadata=rules.prepare_single_cell_pseudobulk.output.metadata,
         metrics=rules.prepare_single_cell_pseudobulk.output.metrics,
         config="config/config.yaml",
-        contrasts="config/contrasts.tsv",
-        dataset_plan="config/dataset_plan.tsv"
+        contrasts=AUTHORITY_CONTRASTS,
+        dataset_plan=AUTHORITY_DATASET_PLAN
     output:
         marker=f"{PSEUDOBULK_ROOT}/{{dataset}}/pseudobulk/deseq2/.complete",
         session=f"{PSEUDOBULK_ROOT}/{{dataset}}/pseudobulk/deseq2/session_info.txt"
@@ -263,7 +263,7 @@ rule prepare_joint_pseudobulk:
         datasets=pseudobulk_analysis_input_markers,
         config="config/config.yaml",
         dataset_plan=config["multi_dataset"]["dataset_plan_file"],
-        contrasts="config/contrasts.tsv"
+        contrasts=AUTHORITY_CONTRASTS
     output:
         counts=f"{MERGED_PSEUDOBULK_ROOT}/{{analysis}}/joint_model/input/raw_counts.tsv",
         metadata=f"{MERGED_PSEUDOBULK_ROOT}/{{analysis}}/joint_model/input/sample_metadata.tsv",
@@ -298,7 +298,7 @@ rule pseudobulk_joint_model:
         metadata=rules.prepare_joint_pseudobulk.output.metadata,
         config="config/config.yaml",
         dataset_plan=config["multi_dataset"]["dataset_plan_file"],
-        contrasts="config/contrasts.tsv"
+        contrasts=AUTHORITY_CONTRASTS
     output:
         marker=f"{MERGED_PSEUDOBULK_ROOT}/{{analysis}}/joint_model/.complete",
         manifest=f"{MERGED_PSEUDOBULK_ROOT}/{{analysis}}/joint_model/results_manifest.tsv"
@@ -332,7 +332,7 @@ rule pseudobulk_per_dataset_meta:
         datasets=pseudobulk_analysis_dataset_markers,
         config="config/config.yaml",
         dataset_plan=config["multi_dataset"]["dataset_plan_file"],
-        contrasts="config/contrasts.tsv"
+        contrasts=AUTHORITY_CONTRASTS
     output:
         marker=f"{META_PSEUDOBULK_ROOT}/{{analysis}}/per_dataset_meta/.complete",
         manifest=f"{META_PSEUDOBULK_ROOT}/{{analysis}}/per_dataset_meta/results_manifest.tsv"
@@ -366,7 +366,7 @@ rule pseudobulk_stratified_validation:
         datasets=pseudobulk_analysis_dataset_markers,
         config="config/config.yaml",
         dataset_plan=config["multi_dataset"]["dataset_plan_file"],
-        contrasts="config/contrasts.tsv"
+        contrasts=AUTHORITY_CONTRASTS
     output:
         marker=f"{META_PSEUDOBULK_ROOT}/{{analysis}}/stratified_validation/.complete",
         manifest=f"{META_PSEUDOBULK_ROOT}/{{analysis}}/stratified_validation/results_manifest.tsv"
@@ -435,8 +435,8 @@ rule single_cell_proportion:
     input:
         metadata=rules.prepare_single_cell_pseudobulk.output.metadata,
         config="config/config.yaml",
-        contrasts="config/contrasts.tsv",
-        dataset_plan="config/dataset_plan.tsv"
+        contrasts=AUTHORITY_CONTRASTS,
+        dataset_plan=AUTHORITY_DATASET_PLAN
     output:
         marker=f"{SINGLE_CELL_ROOT}/{{dataset}}/single_cell/cell_proportion/.complete",
         results=f"{SINGLE_CELL_ROOT}/{{dataset}}/single_cell/cell_proportion/results.tsv",
