@@ -145,6 +145,36 @@ class BulkAnalysisTests(unittest.TestCase):
         self.assertIn("NON_INTEGER_BULK_COUNTS", check_ids(issues))
         self.assertTrue(blocking_issues(issues))
 
+    def test_tpm_named_matrix_is_rejected_even_when_integer_valued(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "tpm_values.tsv"
+            path.write_text(
+                "gene_id\tS1\tS2\nG1\t10\t20\nG2\t30\t40\n",
+                encoding="utf-8",
+            )
+            _, issues = validate_bulk_count_matrix(
+                path,
+                ["S1", "S2"],
+                "GSE_TEST",
+            )
+        self.assertIn("NORMALIZED_BULK_MATRIX_SUSPECTED", check_ids(issues))
+        self.assertTrue(blocking_issues(issues))
+
+    def test_cpm_like_integer_matrix_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "counts.tsv"
+            path.write_text(
+                "gene_id\tS1\tS2\nG1\t500000\t250000\nG2\t500000\t750000\n",
+                encoding="utf-8",
+            )
+            _, issues = validate_bulk_count_matrix(
+                path,
+                ["S1", "S2"],
+                "GSE_TEST",
+            )
+        self.assertIn("NORMALIZED_BULK_MATRIX_SUSPECTED", check_ids(issues))
+        self.assertTrue(blocking_issues(issues))
+
     def test_sample_order_mismatch_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "counts.tsv"
@@ -197,6 +227,30 @@ class BulkAnalysisTests(unittest.TestCase):
         self.assertTrue(any(row["outlier_flag"] == "true" for row in outliers))
         self.assertTrue(
             all(row["retained_for_analysis"] == "true" for row in outliers)
+        )
+
+    def test_bulk_r_scripts_validate_counts_before_coercion(self):
+        deseq_source = (
+            PROJECT_ROOT / "workflow" / "scripts" / "run_bulk_deseq2.R"
+        ).read_text(encoding="utf-8")
+        qc_source = (
+            PROJECT_ROOT / "workflow" / "scripts" / "run_bulk_qc.R"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "Bulk DESeq2 requires finite non-negative integer raw counts",
+            deseq_source,
+        )
+        self.assertIn(
+            "Bulk QC requires finite non-negative integer raw counts",
+            qc_source,
+        )
+        self.assertLess(
+            deseq_source.index("validate_raw_integer_counts(counts_frame)"),
+            deseq_source.index("rownames(counts_all) <- counts_frame[[1]]"),
+        )
+        self.assertLess(
+            qc_source.index("validate_raw_integer_counts(counts_frame)"),
+            qc_source.index("rownames(counts) <- counts_frame[[1]]"),
         )
 
 

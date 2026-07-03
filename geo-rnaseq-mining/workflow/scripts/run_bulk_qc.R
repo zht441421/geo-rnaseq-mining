@@ -51,6 +51,32 @@ robust_z <- function(values) {
   rep(0, length(values))
 }
 
+validate_raw_integer_counts <- function(frame) {
+  if (ncol(frame) < 2) {
+    stop("Bulk QC requires at least one sample count column")
+  }
+  if (anyDuplicated(frame[[1]])) {
+    stop("Bulk QC input contains duplicate gene IDs")
+  }
+  values <- as.matrix(frame[, -1, drop = FALSE])
+  numeric_values <- suppressWarnings(matrix(
+    as.numeric(values),
+    nrow = nrow(values),
+    dimnames = dimnames(values)
+  ))
+  if (any(is.na(numeric_values)) || any(!is.finite(numeric_values))) {
+    stop("Bulk QC requires finite non-negative integer raw counts")
+  }
+  if (any(numeric_values < 0)) {
+    stop("Bulk QC requires finite non-negative integer raw counts")
+  }
+  if (any(abs(numeric_values - round(numeric_values)) > sqrt(.Machine$double.eps))) {
+    stop("Bulk QC requires finite non-negative integer raw counts")
+  }
+  storage.mode(numeric_values) <- "integer"
+  numeric_values
+}
+
 message_plot <- function(path, label) {
   png(path, width = 1200, height = 900, res = 140)
   plot.new()
@@ -70,8 +96,7 @@ if (anyDuplicated(counts_frame[[1]])) {
   stop("QC input contains duplicate gene IDs")
 }
 
-counts <- as.matrix(counts_frame[, -1, drop = FALSE])
-storage.mode(counts) <- "numeric"
+counts <- validate_raw_integer_counts(counts_frame)
 rownames(counts) <- counts_frame[[1]]
 log_counts <- log2(counts + 1)
 library_size <- colSums(counts)

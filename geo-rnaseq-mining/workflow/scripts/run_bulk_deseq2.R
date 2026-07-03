@@ -46,6 +46,32 @@ safe_name <- function(value) {
   gsub("[^A-Za-z0-9_.-]", "_", value)
 }
 
+validate_raw_integer_counts <- function(frame) {
+  if (ncol(frame) < 2) {
+    stop("Bulk DESeq2 requires at least one sample count column")
+  }
+  if (anyDuplicated(frame[[1]])) {
+    stop("Bulk DESeq2 input contains duplicate gene IDs")
+  }
+  values <- as.matrix(frame[, -1, drop = FALSE])
+  numeric_values <- suppressWarnings(matrix(
+    as.numeric(values),
+    nrow = nrow(values),
+    dimnames = dimnames(values)
+  ))
+  if (any(is.na(numeric_values)) || any(!is.finite(numeric_values))) {
+    stop("Bulk DESeq2 requires finite non-negative integer raw counts")
+  }
+  if (any(numeric_values < 0)) {
+    stop("Bulk DESeq2 requires finite non-negative integer raw counts")
+  }
+  if (any(abs(numeric_values - round(numeric_values)) > sqrt(.Machine$double.eps))) {
+    stop("Bulk DESeq2 requires finite non-negative integer raw counts")
+  }
+  storage.mode(numeric_values) <- "integer"
+  numeric_values
+}
+
 message_plot <- function(path, label) {
   png(path, width = 1200, height = 900, res = 140)
   plot.new()
@@ -85,8 +111,7 @@ plan <- read_tsv(opt$`dataset-plan`)
 if (!identical(colnames(counts_frame)[-1], metadata_all$sample_id)) {
   stop("DESeq2 count columns differ from reviewed metadata order")
 }
-counts_all <- as.matrix(counts_frame[, -1, drop = FALSE])
-storage.mode(counts_all) <- "integer"
+counts_all <- validate_raw_integer_counts(counts_frame)
 rownames(counts_all) <- counts_frame[[1]]
 
 analysis_ids <- unique(
