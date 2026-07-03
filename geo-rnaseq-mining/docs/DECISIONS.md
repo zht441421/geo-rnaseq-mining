@@ -1,5 +1,34 @@
 # Decisions
 
+## 2026-07-03 - D016: Remaining Scaffolds Require Explicit Review
+
+### Decision
+
+The remaining untracked top-level `scripts/*` placeholders/scaffold and
+`../AGENTS.md` must not be deleted, staged, committed, moved, or repaired
+without explicit user confirmation in a dedicated follow-up task.
+
+### Rationale
+
+Generated dirty files have been cleaned and the implementation split commits
+are complete. The remaining files require separate product and repository
+layout decisions: top-level scripts may be deleted, converted to real wrappers,
+or committed as explicit scaffold; `../AGENTS.md` has location and encoding
+issues.
+
+### Scope
+
+- `scripts/*`
+- `../AGENTS.md`
+- next-session cleanup planning
+
+### Boundaries
+
+- Do not use `git clean` to remove these files.
+- Do not commit placeholder scripts as implementation evidence.
+- Do not commit mojibake `../AGENTS.md`.
+- Do not mix this cleanup with production e2e validation or feature work.
+
 ## 2026-07-03 - D015: Default Entry Is Skeleton Validation, Not Production
 
 ### Decision

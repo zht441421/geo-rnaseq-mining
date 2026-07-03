@@ -1,5 +1,58 @@
 # Changelog
 
+## 2026-07-03 - Final Split/Cleanup Handoff
+
+### Changed
+
+- Completed focused split commits for workflow entry repair, handoff docs,
+  README/project overview, Stage 1 skeleton rules, authority metadata
+  migration, Stage 2 metadata tooling, MVP hardening, reporting/test-status,
+  bulk raw-count hardening, single-cell annotation review contract,
+  pseudobulk implementation, bulk/scRNA integration finality, joint-bulk
+  message cleanup, and optional Conda env definitions.
+- Cleaned generated dirty files by restoring
+  `results/compatibility/code_gap_report.tsv` and removing
+  `resources/.authority_files_present`.
+- Updated final handoff docs to reflect HEAD `098d682c` and the remaining
+  untracked file groups.
+
+### Commits
+
+- `e59ea116` `fix(workflow): make default entrypoint schema-valid and executable`
+- `17ad95e4` `docs: add session handoff and validation state`
+- `9ae0ec6e` `docs: refresh project overview and run modes`
+- `ae003e58` `chore(workflow): add stage 1 compatibility skeleton rules`
+- `b7c05b97` `refactor(authority): migrate reviewed inputs to metadata directory`
+- `f97ed1cd` `feat(metadata): add stage 2 suggested output tooling`
+- `9c10093b` `test(mvp): harden fixture e2e validation and provenance`
+- `0745c142` `feat(reporting): surface test status and review limitations`
+- `0611407b` `fix(bulk): reject non-raw count matrices before analysis`
+- `04df21fe` `feat(scrna): mark suggested annotations as review-required`
+- `bb26f073` `feat(scrna): aggregate pseudobulk by subject group and cell type`
+- `b782ae25` `feat(integration): mark candidate genes as review-required`
+- `18c5ec62` `chore(authority): update joint bulk reviewed metadata message`
+- `098d682c` `chore(envs): add optional workflow conda environments`
+
+### Validation
+
+- Earlier P0 full validation passed and remains recorded in
+  `docs/VALIDATION.md`.
+- Later split commits ran targeted tests and default Snakemake dry-run before
+  each commit.
+- The env commit parsed all `workflow/envs/*.yaml` files and passed default
+  Snakemake dry-run.
+- This final handoff did not rerun the full suite.
+
+### Known Issues
+
+- Remaining untracked files are `scripts/*` placeholders/scaffold and
+  `../AGENTS.md`.
+- `../AGENTS.md` has mojibake/encoding issues and remains outside the repo
+  subdirectory.
+- Conda strict channel priority warning still appears during dry-runs.
+- Real GEO/SRA, R/Bioconductor/DESeq2, full Conda solve/install, and
+  production real-data e2e remain unverified.
+
 ## 2026-07-03 - P0 Default Entry Repair And Markdown Handoff
 
 ### Changed

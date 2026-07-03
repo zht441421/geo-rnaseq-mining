@@ -2,111 +2,94 @@
 
 ## Next Stage Goal
 
-Perform a commit-readiness and dirty-working-tree audit for the current
-repository state.
+Resolve remaining untracked scaffolds and instruction file.
 
-The next session should decide what belongs in the current commit, what is
-generated output, what is unrelated prior work, and what should remain
-unstaged. This task is an audit and staging plan only unless the user
-explicitly asks to stage or commit.
+The only remaining untracked items after generated cleanup and env commits are
+top-level `scripts/*` placeholders/scaffold and `../AGENTS.md`. The next
+session should decide what to do with those files and stop.
 
-## Files Allowed To Modify
+## Scope
 
-For the audit report only:
+Allowed to inspect:
 
-- `docs/CURRENT_STATE.md`
-- `docs/VALIDATION.md`
-- `docs/CHANGELOG.md`
-- `docs/NEXT_TASK.md`
+- `scripts/*`
+- `../AGENTS.md`
+- current Git status
+- handoff docs listed below
 
-If the user explicitly asks for a commit or staging changes, follow their
-instruction and avoid reverting unrelated work.
+Possible outcomes to plan, after user confirmation:
 
-## Files And Ranges Not To Modify By Default
+- delete `scripts/*`;
+- convert `scripts/*` into real thin wrappers;
+- commit `scripts/*` as explicit scaffold;
+- repair or relocate `../AGENTS.md`;
+- leave one or both groups untracked.
 
-- Do not modify code, workflow, schema, CI, tests, data, fixtures, or configs
-  during the audit.
-- Do not fix P1/P2/P3 issues during this task.
-- Do not run real GEO/SRA network tests unless explicitly requested.
-- Do not delete generated files or clean the working tree without explicit
-  approval.
-- Do not stage or commit files unless explicitly requested.
+## Explicit Non-Goals
+
+- Do not handle production e2e validation.
+- Do not add new features.
+- Do not modify workflow logic.
+- Do not handle generated files.
+- Do not rerun or claim R/Bioconductor/GEO/SRA production validation.
+- Do not use `git clean`.
+- Do not delete or commit `scripts/*` or `../AGENTS.md` without explicit user
+  confirmation.
 
 ## Required Start Reads
 
 Read these first:
 
-- `AGENTS.md`
-- `README.md`
 - `docs/CURRENT_STATE.md`
-- `docs/DECISIONS.md`
-- `docs/CHANGELOG.md`
+- `docs/SESSION_HANDOFF.md`
 - `docs/VALIDATION.md`
 - `docs/NEXT_TASK.md`
+- `docs/CHANGELOG.md`
 
-Then inspect the actual file state; do not rely on handoff text alone.
-
-## Implementation Steps
-
-1. Record current branch, HEAD, and `git status --short`.
-2. Group tracked modified files by category:
-   - P0 default-entry repair;
-   - previous stage workflow/scripts/tests/resource docs;
-   - generated outputs or markers;
-   - handoff Markdown;
-   - unknown or unrelated changes.
-3. Group untracked files by category:
-   - docs/handoff files;
-   - metadata templates;
-   - workflow envs/rules/scripts;
-   - tests;
-   - generated markers;
-   - unknown files.
-4. Identify files that should likely be staged together for the P0 repair.
-5. Identify files that require user confirmation before staging.
-6. Produce a concise commit-readiness report.
-7. Stop and wait for user confirmation before staging, committing, cleaning, or
-   implementing any fixes.
-
-## Validation Commands
-
-This audit does not require rerunning tests by default. If validation is needed
-because files changed after the last recorded run, use:
+Then run:
 
 ```bash
-python -m compileall -q workflow scripts tests
-python -m unittest discover -s tests/unit -p "test_*.py" -v
-pytest tests/unit -q
-python -m unittest discover -s tests/integration -p "test_*.py" -v
-snakemake --snakefile workflow/Snakefile --configfile config/config.yaml --dry-run --quiet
-snakemake --snakefile workflow/Snakefile --configfile config/config.yaml --cores 1 --printshellcmds
-snakemake --snakefile workflow/Snakefile --configfile config/config.yaml --dry-run --forceall all_full
-snakemake --snakefile workflow/Snakefile --cores 1 --configfile tests/fixtures/config/test_config.yaml
+git branch --show-current
+git rev-parse HEAD
+git status --short
+git log --oneline -n 20
 ```
 
-If tests are not rerun, explicitly state that the latest validation status is
-from `docs/VALIDATION.md`.
+## Suggested Read-Only Inspection
+
+```bash
+git ls-files --others --exclude-standard
+Get-Content -TotalCount 120 scripts/build_manifest.py
+Get-Content -TotalCount 120 scripts/bulk_deseq2.R
+Get-Content -TotalCount 120 scripts/fetch_geo_metadata.R
+Get-Content -TotalCount 120 scripts/integrate_bulk_sc.R
+Get-Content -TotalCount 120 scripts/pseudobulk.R
+Get-Content -TotalCount 120 scripts/render_report.R
+Get-Content -TotalCount 120 scripts/scrna_scanpy.py
+Get-Content -TotalCount 120 scripts/validate_contrasts.py
+Get-Content -TotalCount 120 scripts/validate_dataset_plan.py
+Get-Content -TotalCount 120 scripts/validate_manifest.py
+Get-Content -TotalCount 160 ../AGENTS.md
+```
 
 ## Completion Standard
 
-- Current dirty working tree is categorized.
-- Candidate staging set for the P0 repair is listed.
-- Ambiguous or generated files needing user confirmation are listed.
-- No files are staged, committed, deleted, or reverted without explicit user
-  confirmation.
+- Each remaining untracked file is classified.
+- A user-approved action is selected for `scripts/*`.
+- A user-approved action is selected for `../AGENTS.md`.
+- No production validation or feature development is started.
 
 ## Stop Conditions
 
-- Stop if the user asks only for audit results.
-- Stop before staging or committing.
-- Stop before deleting generated files.
-- Stop before starting real-data validation.
-- Stop before implementing P1/P2/P3 fixes.
+- Stop before deleting files.
+- Stop before staging or committing files.
+- Stop before repairing encoding or moving `../AGENTS.md`.
+- Stop before implementing wrappers.
 
 ## Do Not Handle Opportunistically
 
-- Do not fix hard-coded config paths.
-- Do not configure Conda strict channel priority.
-- Do not add real GEO/SRA secrets or accessions.
-- Do not run native R/Bioconductor production analyses.
-- Do not refactor workflow rules or scripts.
+- Conda strict channel priority.
+- Real GEO/SRA network access.
+- Native R/Bioconductor/DESeq2 execution.
+- Production real-data e2e.
+- Any generated output cleanup beyond the already completed generated cleanup.

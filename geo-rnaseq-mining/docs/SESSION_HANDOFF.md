@@ -2,146 +2,94 @@
 
 ## Stage
 
-P0 workflow-entry repair is complete. This handoff records the repository state
-after fixing the default Snakemake entry, strict MVP fixture schema support,
-README run-mode documentation, and CI default execution coverage.
+Final split/cleanup handoff.
 
-No P1/P2/P3 work was performed during the handoff. Do not continue feature
-development from this document; read `docs/NEXT_TASK.md` first.
+All requested implementation groups have been split into focused commits.
+Generated dirty files were cleaned. This handoff updates documentation only.
 
-## Confirmed P0 Changes
-
-Verified from the actual files in this repository:
-
-- `workflow/Snakefile` now routes default `rule all` through a safe default
-  target set unless `mvp.enabled=true`.
-- Default `config/config.yaml` now runs skeleton / validation /
-  empty-accession targets.
-- Explicit `mvp.enabled=true` still routes the default `all` target to the MVP
-  fixture path and `mvp_pipeline`.
-- `workflow/schemas/config.schema.yaml` includes an optional strict `mvp`
-  schema and keeps top-level `additionalProperties: false`.
-- `tests/fixtures/config/test_config.yaml` includes fixture-only placeholder
-  config needed to pass the strict schema.
-- `README.md` explains default skeleton mode, explicit MVP fixture mode, and
-  real production mode.
-- `.github/workflows/ci.yml` includes a default skeleton execution step.
-- No core analysis algorithm change, new dependency, or secret access is part
-  of this P0 repair.
-
-## Required Interpretation
-
-- Default entry can now complete.
-- Default entry means: skeleton / validation / empty-accession path is
-  executable.
-- Default entry does not mean:
-  - real GEO/SRA path has been validated;
-  - R/Bioconductor path has been validated;
-  - production bulk/single-cell analysis has been validated;
-  - real production data end-to-end execution has been validated.
-- MVP fixture e2e success means only the fixture path is available.
-- MVP fixture e2e success does not mean production data paths are available.
-- Dry-run success does not mean real execution success.
-- Current P0 is fixed. Remaining issues are P1/P2/P3.
-
-## Validation Results
-
-The following validation was run after the P0 repair. This session handoff did
-not rerun the full test suite; it records the latest P0 verification results.
-
-| Command | Result | Notes |
-| --- | --- | --- |
-| `python -m compileall -q workflow scripts tests` | Passed | Python compile check OK. |
-| `python -m unittest discover -s tests/unit -p "test_*.py" -v` | Passed | 145 tests OK. |
-| `pytest tests/unit -q` | Passed | 145 passed, 2 warnings, 45 subtests passed. |
-| `python -m unittest discover -s tests/integration -p "test_*.py" -v` | Passed | 3 tests OK, 2 real network/SRA tests skipped by opt-in. |
-| `snakemake --snakefile workflow/Snakefile --configfile config/config.yaml --dry-run --quiet` | Passed | Default dry-run OK. |
-| `snakemake --snakefile workflow/Snakefile --configfile config/config.yaml --cores 1 --printshellcmds` | Passed | Default skeleton real execution completed. |
-| `snakemake --snakefile workflow/Snakefile --configfile config/config.yaml --dry-run --forceall all_full` | Passed | Expanded 23 skeleton/all_full jobs. |
-| `snakemake --snakefile workflow/Snakefile --cores 1 --configfile tests/fixtures/config/test_config.yaml` | Passed | Explicit MVP fixture e2e completed via `mvp_pipeline`. |
-| jsonschema validation for `config/config.yaml` | Passed | Default config passes schema. |
-| jsonschema validation for `tests/fixtures/config/test_config.yaml` | Passed | Fixture MVP config passes schema. |
-
-## Failed Or Not Run
-
-- No failure was recorded in the latest P0 verification.
-- Real GEO/SRA network tests were not run:
-  - `RUN_GEO_NETWORK_TESTS=1`
-  - `RUN_SRA_NETWORK_TESTS=1` plus `SRA_TEST_ACCESSION`
-- Real configured GSE/GEOquery fetch was not run.
-- Native R/Bioconductor DESeq2 execution was not run.
-- Real biological production dataset e2e was not run.
-
-## Current Git State
+## Git State
 
 - Branch: `123`
-- HEAD: `cb85b98c6048774627084863bab5d99f0962d1bb`
-- Working tree: dirty with tracked modifications and untracked files.
+- HEAD: `098d682cb180748d73422038d779ad73811c04e6`
+- Working tree before this handoff document update:
 
-Tracked modified files reported by `git status --short` include:
+```text
+?? ../AGENTS.md
+?? scripts/build_manifest.py
+?? scripts/bulk_deseq2.R
+?? scripts/fetch_geo_metadata.R
+?? scripts/integrate_bulk_sc.R
+?? scripts/pseudobulk.R
+?? scripts/render_report.R
+?? scripts/scrna_scanpy.py
+?? scripts/validate_contrasts.py
+?? scripts/validate_dataset_plan.py
+?? scripts/validate_manifest.py
+```
 
-- `.github/workflows/ci.yml`
-- `README.md`
-- `config/config.yaml`
-- `resources/AUTHORITY_CONFIG_DICTIONARY.md`
-- `resources/BULK_ANALYSIS.md`
-- `resources/MULTI_DATASET_BULK.md`
-- `results/compatibility/code_gap_report.tsv`
-- `tests/fixtures/config/test_config.yaml`
-- several `tests/unit/test_*.py`
-- `workflow/Snakefile`
-- several `workflow/rules/*.smk`
-- `workflow/schemas/config.schema.yaml`
-- several `workflow/scripts/*`
+After this handoff, the updated `docs/*.md` files will also be dirty until
+committed or otherwise handled.
 
-Untracked files reported by `git status --short` include:
+## Completed Commits
 
-- `AGENTS.md`
-- `geo-rnaseq-mining/PROJECT_BRIEF.md`
-- `geo-rnaseq-mining/docs/`
-- `metadata/reviewed/*.tsv`
-- `resources/.authority_files_present`
-- top-level placeholder scripts under `scripts/`
-- additional unit tests
-- workflow envs/rules/scripts added in previous stages
+- `e59ea116` `fix(workflow): make default entrypoint schema-valid and executable`
+- `17ad95e4` `docs: add session handoff and validation state`
+- `9ae0ec6e` `docs: refresh project overview and run modes`
+- `ae003e58` `chore(workflow): add stage 1 compatibility skeleton rules`
+- `b7c05b97` `refactor(authority): migrate reviewed inputs to metadata directory`
+- `f97ed1cd` `feat(metadata): add stage 2 suggested output tooling`
+- `9c10093b` `test(mvp): harden fixture e2e validation and provenance`
+- `0745c142` `feat(reporting): surface test status and review limitations`
+- `0611407b` `fix(bulk): reject non-raw count matrices before analysis`
+- `04df21fe` `feat(scrna): mark suggested annotations as review-required`
+- `bb26f073` `feat(scrna): aggregate pseudobulk by subject group and cell type`
+- `b782ae25` `feat(integration): mark candidate genes as review-required`
+- `18c5ec62` `chore(authority): update joint bulk reviewed metadata message`
+- `098d682c` `chore(envs): add optional workflow conda environments`
 
-Run `git status --short` again before staging or committing; this list is a
-handoff summary, not a substitute for current Git output.
+## Remaining Untracked
 
-## Modified Handoff Documents
+- `../AGENTS.md`
+- `scripts/build_manifest.py`
+- `scripts/bulk_deseq2.R`
+- `scripts/fetch_geo_metadata.R`
+- `scripts/integrate_bulk_sc.R`
+- `scripts/pseudobulk.R`
+- `scripts/render_report.R`
+- `scripts/scrna_scanpy.py`
+- `scripts/validate_contrasts.py`
+- `scripts/validate_dataset_plan.py`
+- `scripts/validate_manifest.py`
 
-- `docs/CURRENT_STATE.md`
-- `docs/CHANGELOG.md`
-- `docs/DECISIONS.md`
-- `docs/NEXT_TASK.md`
-- `docs/VALIDATION.md`
-- `docs/SESSION_HANDOFF.md`
+## Validation Summary
 
-## Remaining Candidate Work
+- Earlier P0 full validation passed, including unit discovery, pytest, limited
+  integration tests, default dry-run, default skeleton execution, `all_full`
+  dry-run, fixture MVP e2e, and schema checks.
+- Each later implementation commit ran targeted tests plus default Snakemake
+  dry-run before commit.
+- The final env commit ran YAML parse checks and default Snakemake dry-run.
+- Snakemake dry-runs continue to emit the Conda strict channel priority warning.
 
-Record only unless explicitly authorized:
+## Still Not Verified
 
-- P1: audit and reduce hard-coded `config/config.yaml` /
-  `metadata/reviewed/*` paths.
-- P2: configure or document Conda strict channel priority.
-- P2: run opt-in real GEO/SRA validation.
-- P2: run native R/Bioconductor validation in Linux, WSL, or a container.
-- P3: separate production profiles and automate real-data validation evidence.
+- R/Bioconductor/DESeq2 production path.
+- Real GEO/SRA network path.
+- Production real-data end-to-end workflow.
+- Full Conda environment solve/install.
+- A fresh full test suite after the final env commit.
 
-## Next Session
+## Next Step
 
-Start by reading:
+Resolve remaining untracked scaffolds and instruction file.
 
-- `AGENTS.md`
-- `README.md`
-- `docs/CURRENT_STATE.md`
-- `docs/NEXT_TASK.md`
-- `docs/DECISIONS.md`
-- `docs/VALIDATION.md`
-- `docs/CHANGELOG.md`
-- `docs/SESSION_HANDOFF.md`
+Read `docs/NEXT_TASK.md` before taking action. Do not stage, commit, delete, or
+repair `scripts/*` or `../AGENTS.md` without explicit user confirmation.
 
-Then inspect actual file state and Git state. The next authorized task is the
-commit-readiness / dirty-working-tree audit described in `docs/NEXT_TASK.md`.
-Do not stage, commit, clean, or implement P1/P2/P3 without explicit user
-confirmation.
+## Boundaries
+
+- Do not claim fixture/dry-run success as production validation.
+- Do not claim suggested annotations are reviewed or final.
+- Do not claim candidate genes are final biological conclusions.
+- Do not commit `scripts/*` or `../AGENTS.md` without explicit review.
+- Do not continue feature development during handoff.
