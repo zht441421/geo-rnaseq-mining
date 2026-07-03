@@ -301,7 +301,6 @@ class ProjectSkeletonTests(unittest.TestCase):
         launcher = PROJECT_ROOT / "workflow" / "scripts" / "run_rscript.py"
         self.assertTrue(launcher.is_file())
         for relative_path in (
-            "workflow/rules/metadata.smk",
             "workflow/rules/bulk.smk",
             "workflow/rules/multi_dataset.smk",
             "workflow/rules/single_cell.smk",
@@ -310,6 +309,15 @@ class ProjectSkeletonTests(unittest.TestCase):
                 source = (PROJECT_ROOT / relative_path).read_text(encoding="utf-8")
                 self.assertIn("python workflow/scripts/run_rscript.py", source)
                 self.assertNotIn("\n        Rscript ", source)
+        metadata_rules = (
+            PROJECT_ROOT / "workflow" / "rules" / "metadata.smk"
+        ).read_text(encoding="utf-8")
+        metadata_wrapper = (
+            PROJECT_ROOT / "workflow" / "scripts" / "fetch_geo_metadata.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("python workflow/scripts/fetch_geo_metadata.py", metadata_rules)
+        self.assertIn("workflow/scripts/run_rscript.py", metadata_wrapper)
+        self.assertNotIn("\n        Rscript ", metadata_rules)
         single_cell_common = (
             PROJECT_ROOT / "workflow" / "scripts" / "single_cell_common.py"
         ).read_text(encoding="utf-8")

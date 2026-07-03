@@ -4,6 +4,7 @@ METADATA_CACHE_DIR = config["geo"]["cache_dir"]
 METADATA_EVENT_DIR = f"{RAW_METADATA_DIR}/.events"
 GEO_ACCESSIONS = config["geo"].get("accessions", [])
 GEO_ACCESSIONS_ARG = ",".join(GEO_ACCESSIONS)
+GEO_METADATA_ENV = "../envs/r-bulk.yaml" if GEO_ACCESSIONS else "../envs/base.yaml"
 
 
 rule fetch_geo_metadata:
@@ -19,7 +20,7 @@ rule fetch_geo_metadata:
     benchmark:
         "benchmarks/metadata/fetch_geo_metadata.tsv"
     conda:
-        "../envs/r-bulk.yaml"
+        GEO_METADATA_ENV
     threads: 1
     resources:
         mem_mb=config["resources"]["download"]["mem_mb"],
@@ -32,7 +33,7 @@ rule fetch_geo_metadata:
         retry_delay=config["geo"]["retry_delay_seconds"]
     shell:
         """
-        python workflow/scripts/run_rscript.py workflow/scripts/fetch_geo_metadata.R \
+        python workflow/scripts/fetch_geo_metadata.py \
           --accessions "{params.accessions}" \
           --series-output {output.series:q} \
           --samples-output {output.samples:q} \
@@ -51,7 +52,8 @@ rule fetch_geo_supplementary_index:
         series=rules.fetch_geo_metadata.output.series,
         samples=rules.fetch_geo_metadata.output.samples
     output:
-        index=f"{RAW_METADATA_DIR}/supplementary_files_raw.tsv",
+        index=f"{RAW_METADATA_DIR}/geo_supplementary_files_raw.tsv",
+        legacy=f"{RAW_METADATA_DIR}/supplementary_files_raw.tsv",
         events=f"{METADATA_EVENT_DIR}/fetch_geo_supplementary_index.tsv"
     log:
         "logs/metadata/fetch_geo_supplementary_index.log"
@@ -77,6 +79,7 @@ rule fetch_geo_supplementary_index:
           --series {input.series:q} \
           --samples {input.samples:q} \
           --output {output.index:q} \
+          --legacy-output {output.legacy:q} \
           --event-log {output.events:q} \
           --cache-dir {params.cache_dir:q} \
           --retries {params.retries} \
@@ -205,11 +208,69 @@ rule prepare_manifest:
         """
 
 
+rule prepare_dataset_plan_suggested:
+    input:
+        config="config/config.yaml",
+        manifest=rules.prepare_manifest.output.manifest
+    output:
+        dataset_plan=f"{SUGGESTED_METADATA_DIR}/dataset_plan_suggested.tsv"
+    log:
+        "logs/metadata/prepare_dataset_plan_suggested.log"
+    benchmark:
+        "benchmarks/metadata/prepare_dataset_plan_suggested.tsv"
+    conda:
+        "../envs/base.yaml"
+    threads: 1
+    resources:
+        mem_mb=config["resources"]["default"]["mem_mb"],
+        runtime_min=config["resources"]["default"]["runtime_min"],
+        disk_mb=config["resources"]["default"]["disk_mb"]
+    shell:
+        """
+        python workflow/scripts/prepare_dataset_plan_suggested.py \
+          --config {input.config:q} \
+          --manifest {input.manifest:q} \
+          --output {output.dataset_plan:q} \
+          > {log:q} 2>&1
+        """
+
+
+rule prepare_data_entry_classification:
+    input:
+        samples=rules.fetch_geo_metadata.output.samples,
+        runinfo=rules.fetch_sra_runinfo.output.runinfo,
+        supplementary=rules.fetch_geo_supplementary_index.output.index
+    output:
+        classification=f"{SUGGESTED_METADATA_DIR}/data_entry_classification.tsv"
+    log:
+        "logs/metadata/prepare_data_entry_classification.log"
+    benchmark:
+        "benchmarks/metadata/prepare_data_entry_classification.tsv"
+    conda:
+        "../envs/base.yaml"
+    threads: 1
+    resources:
+        mem_mb=config["resources"]["default"]["mem_mb"],
+        runtime_min=config["resources"]["default"]["runtime_min"],
+        disk_mb=config["resources"]["default"]["disk_mb"]
+    shell:
+        """
+        python workflow/scripts/prepare_data_entry_classification.py \
+          --samples {input.samples:q} \
+          --runinfo {input.runinfo:q} \
+          --supplementary {input.supplementary:q} \
+          --output {output.classification:q} \
+          > {log:q} 2>&1
+        """
+
+
 rule generate_metadata_review_report:
     input:
         manifest=rules.prepare_manifest.output.manifest,
         conflicts=rules.prepare_manifest.output.conflicts,
-        unmapped=rules.prepare_manifest.output.unmapped
+        unmapped=rules.prepare_manifest.output.unmapped,
+        dataset_plan=rules.prepare_dataset_plan_suggested.output.dataset_plan,
+        classification=rules.prepare_data_entry_classification.output.classification
     output:
         report=f"{SUGGESTED_METADATA_DIR}/metadata_review_report.html"
     log:
@@ -229,6 +290,8 @@ rule generate_metadata_review_report:
           --manifest {input.manifest:q} \
           --conflicts {input.conflicts:q} \
           --unmapped-runs {input.unmapped:q} \
+          --dataset-plan {input.dataset_plan:q} \
+          --data-entry-classification {input.classification:q} \
           --output {output.report:q} \
           > {log:q} 2>&1
         """

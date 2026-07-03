@@ -3,6 +3,7 @@
 import argparse
 import json
 import mimetypes
+import shutil
 import time
 import urllib.parse
 import urllib.request
@@ -175,6 +176,7 @@ def parse_args():
     parser.add_argument("--series", required=True)
     parser.add_argument("--samples", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--legacy-output")
     parser.add_argument("--event-log", required=True)
     parser.add_argument("--cache-dir", required=True)
     parser.add_argument("--retries", type=int, default=3)
@@ -221,6 +223,10 @@ def main():
         )
     )
     write_tsv(args.output, FIELDS, entries)
+    if args.legacy_output:
+        legacy_output = Path(args.legacy_output)
+        legacy_output.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(args.output, legacy_output)
     write_events(args.event_log, events)
 
 
