@@ -210,6 +210,38 @@ class SingleCellPreprocessingTests(unittest.TestCase):
         add_suggested_annotations(adata, markers, config)
         self.assertTrue(adata.obs["author_label"].equals(original))
         self.assertTrue((adata.obs["suggested_annotation"] == "unassigned").all())
+        self.assertTrue(
+            (adata.obs["suggested_annotation_review_status"] == "not_reviewed").all()
+        )
+        self.assertTrue((adata.obs["suggested_annotation_is_final"] == "false").all())
+
+    def test_suggested_annotation_table_requires_human_review(self):
+        config = permissive_config()
+        adata = contract_adata({"S1": [10, 11]})
+        adata.obs["leiden"] = pd.Categorical(["0", "0"])
+        markers = pd.DataFrame(
+            {
+                "cluster": ["0"],
+                "gene_symbol": ["GENE1"],
+                "gene_id_original": ["G1"],
+            }
+        )
+        suggestions = add_suggested_annotations(adata, markers, config)
+        self.assertTrue(
+            {
+                "review_status",
+                "is_final",
+                "required_action",
+            }.issubset(suggestions.columns)
+        )
+        self.assertEqual({"not_reviewed"}, set(suggestions["review_status"]))
+        self.assertEqual({"false"}, set(suggestions["is_final"]))
+        self.assertEqual(
+            {"human_review_required"},
+            set(suggestions["required_action"]),
+        )
+        self.assertFalse(adata.uns["annotation_contract"]["automated_annotation_is_final"])
+        self.assertTrue(adata.uns["annotation_contract"]["requires_human_review"])
 
 
 if __name__ == "__main__":

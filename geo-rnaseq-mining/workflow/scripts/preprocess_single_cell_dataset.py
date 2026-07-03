@@ -125,10 +125,16 @@ def add_suggested_annotations(clustered, markers, config):
     clustered.obs["suggested_annotation"] = (
         clustered.obs["leiden"].astype(str).map(suggestions).fillna("unassigned")
     )
+    clustered.obs["suggested_annotation_review_status"] = "not_reviewed"
+    clustered.obs["suggested_annotation_is_final"] = "false"
     clustered.uns["annotation_contract"] = {
         "author_label_column": "author_label",
         "suggested_label_column": "suggested_annotation",
+        "suggested_review_status_column": "suggested_annotation_review_status",
+        "suggested_is_final_column": "suggested_annotation_is_final",
         "author_or_confirmed_labels_overwritten": False,
+        "automated_annotation_is_final": False,
+        "requires_human_review": True,
         "suggestion_method": (
             "marker_overlap" if marker_sets else "none_no_marker_sets"
         ),
@@ -141,6 +147,9 @@ def add_suggested_annotations(clustered, markers, config):
                 "suggestion_method": (
                     "marker_overlap" if marker_sets else "none_no_marker_sets"
                 ),
+                "review_status": "not_reviewed",
+                "is_final": "false",
+                "required_action": "human_review_required",
             }
             for cluster, label in sorted(suggestions.items())
         ]
@@ -302,6 +311,8 @@ def preprocess_single_cell_dataset(
             "ambient_rna_method": config["single_cell"]["ambient_rna"]["method"],
             "normalization": "normalize_total_log1p",
             "pca": "unintegrated_scaled_hvg",
+            "matrix_contract": clustered.uns.get("matrix_contract", {}),
+            "annotation_contract": clustered.uns.get("annotation_contract", {}),
             "random_seed": int(config["reproducibility"]["random_seed"]),
             "sample_removed_automatically": False,
             "author_labels_overwritten": False,
