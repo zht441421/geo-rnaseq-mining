@@ -90,7 +90,7 @@ def prepare_joint_dataset(
                 "joint_model",
                 "NO_ENABLED_BULK_CONTRAST",
                 f"No enabled bulk contrast is defined for {analysis_id}.",
-                "Define the reviewed contrast in config/contrasts.tsv.",
+                "Define the reviewed contrast in metadata/reviewed/contrasts.tsv.",
                 analysis_id=analysis_id,
             )
         )
