@@ -1,0 +1,11 @@
+name: geo-rnaseq-mining-metadata
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - r-base
+  - bioconductor-geoquery
+  - r-optparse
+  - r-jsonlite
+  - python
+  - pandas

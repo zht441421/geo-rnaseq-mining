@@ -1,0 +1,10 @@
+name: geo-rnaseq-mining-scrna
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python
+  - scanpy
+  - anndata
+  - pandas
+  - numpy

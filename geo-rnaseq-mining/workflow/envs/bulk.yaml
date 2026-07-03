@@ -1,0 +1,10 @@
+name: geo-rnaseq-mining-bulk
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - r-base
+  - bioconductor-deseq2
+  - r-optparse
+  - r-ggplot2
+  - r-pheatmap
