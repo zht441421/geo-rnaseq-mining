@@ -11,6 +11,16 @@ geo:
   metadata_reviewed_file: tests/fixtures/mvp/sample_manifest.tsv
   cache_dir: resources/cache/metadata
 
+metadata_review:
+  case_candidate_terms: [case]
+  control_candidate_terms: [control]
+  technical_replicate_terms: [technical replicate]
+  condition_keys: [condition]
+  tissue_keys: [tissue]
+  batch_keys: [batch]
+  scrna_terms: [single cell, scrna]
+  snrna_terms: [single nucleus, snrna]
+
 references:
   species: human
   genome_build: fixture
@@ -69,9 +79,22 @@ bulk:
   enabled: false
   count_input_type: raw_integer_counts
   quantification_method: salmon_tximport
+  strandedness: unstranded
+  salmon_libtype: A
+  featurecounts_strand: 0
+  salmon:
+    validate_mappings: true
+    seq_bias: true
+    gc_bias: true
+    extra_args: []
+  star:
+    extra_args: []
+  featurecounts:
+    extra_args: []
   deseq2_alpha: 0.05
   deseq2_abs_log2fc: 1.0
   transformation: vst
+  outlier_z_threshold: 3.0
   detected_gene_min_count: 1
   enrichment:
     enabled: false
@@ -80,20 +103,130 @@ bulk:
     immune_infiltration: false
     gsva: false
     survival: false
+    wgcna_settings:
+      soft_power: 6
+      min_module_size: 2
+    immune_infiltration_settings:
+      signature_matrix: null
+    gsva_settings:
+      gene_sets_gmt: null
+      method: zscore
+    survival_settings:
+      metadata_file: null
+      sample_id_column: sample_id
+      time_column: survival_time
+      event_column: survival_event
+      max_genes: 10
 
 single_cell:
   enabled: false
   downstream_analysis_enabled: false
+  modalities: []
   pseudobulk_level: subject_id
   pseudobulk_source: raw_counts
+  allow_scrna_snrna_joint_analysis: null
   celltype_ontology_file: tests/fixtures/mvp/celltype_ontology.tsv
   count_layer: counts
+  rds_converter_script: workflow/scripts/convert_single_cell_rds.R
+  sample_id_column: sample_id
+  author_celltype_column: author_label
+  cell_annotations_file: null
+  mitochondrial_gene_prefixes: [MT-, mt-]
+  qc:
+    strategy: combined
+    gene_prefixes:
+      ribosomal: [RPS, RPL]
+      hemoglobin: [HBA, HBB]
+    hard:
+      min_genes: 0
+      max_genes: 10000
+      min_counts: 0
+      max_counts: null
+      max_pct_mt: 100
+      max_pct_ribo: 100
+      max_pct_hb: 100
+      min_complexity: 0
+    mad:
+      enabled: false
+      min_cells: 3
+      lower_n_mads: 3
+      upper_n_mads: 3
+      metrics: [total_counts, n_genes_by_counts, pct_counts_mt]
+  scrublet:
+    enabled: false
+    expected_doublet_rate: 0.06
+  doublet:
+    enabled: false
+    method: scrublet
+    exclude_predicted: true
+    min_cells: 2
+    scrublet:
+      expected_doublet_rate: 0.06
+    doubletdetection:
+      n_iterations: 1
+      pvalue_threshold: 0.001
+      voter_threshold: 0.5
+  ambient_rna:
+    method: none
+    low_count_quantile: 0.1
+  normalization:
+    target_sum: 10000
+    highly_variable_genes: 1
+    pca_components: 2
+    hvg_flavor: seurat
+    scale_max_value: 10
+    store_scaled_layer: false
+  clustering:
+    n_neighbors: 2
+    leiden_resolution: 1.0
+  annotation:
+    marker_test: wilcoxon
+    markers_per_cluster: 1
+    marker_sets_gmt: null
   pseudobulk:
+    min_cells: 1
     min_cells_per_pseudobulk: 1
     min_subjects_per_group: 1
     min_total_counts: 1
     min_detected_genes: 1
     extra_strata: []
+
+single_cell_integration:
+  enabled: false
+  method: harmony
+  gene_mapping_file: null
+  canonicalize_ensembl_versions: true
+  one_to_many_policy: drop_ambiguous
+  allow_cross_species: false
+  allow_scrna_snrna: false
+  min_shared_genes: 2
+  min_shared_cell_types: 0
+  batch_key: dataset_id
+  harmony:
+    theta: 2.0
+    lambda: 1.0
+    max_iterations: 1
+  scvi:
+    n_latent: 2
+    n_layers: 1
+    n_hidden: 8
+    max_epochs: 1
+    batch_size: 1
+    early_stopping: true
+  seurat:
+    dims: 2
+    k_anchor: 1
+    script: workflow/scripts/run_seurat_integration.R
+  graph:
+    n_neighbors: 2
+    leiden_resolution: 1.0
+  quality:
+    marker_preservation_min_ratio: 0
+    dataset_dominance_fraction: 0.8
+    biological_conservation_min_ratio: 0
+    rare_cell_type_fraction: 0
+    silhouette_max_cells: 10
+    lisi_enabled: false
 
 multi_dataset:
   enabled: false
@@ -101,11 +234,18 @@ multi_dataset:
   default_strategy: null
   prohibit_joint_model_when_dataset_group_confounded: true
   validation_datasets_in_discovery_model: false
+  joint_model:
+    allow_author_counts: false
+    combat_seq:
+      enabled: false
   meta:
     method: fixed_effect
     alpha: 0.05
     min_studies: 2
     loo_effect_change_threshold: 0.5
+  stratified_validation:
+    replication_alpha: 0.05
+    require_same_direction: true
 
 bulk_scrna_integration:
   enabled: false
@@ -115,15 +255,27 @@ bulk_scrna_integration:
   canonicalize_ensembl_versions: true
   one_to_many_policy: report_unresolved
   dominant_celltype_min_delta: 0.05
-  scoring_weights: {}
+  scoring_weights:
+    bulk_stat_score: 1.0
+    bulk_meta_score: 1.0
+    pseudobulk_score: 1.0
+    direction_consistency_score: 1.0
+    celltype_specificity_score: 1.0
+    cross_gse_score: 1.0
+    validation_score: 1.0
+    pathway_support_score: 0.0
+    loo_stability_score: 1.0
   deconvolution:
     enabled: false
     build_signature_from_single_cell: false
     method: nnls
+    min_signature_genes_per_celltype: 1
 
 reporting:
   enabled: false
   formats: [html]
+  include_warnings: true
+  include_provenance: true
   output_dir: results/reports
   title: GEO RNA-seq mining MVP report
 

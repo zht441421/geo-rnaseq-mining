@@ -20,6 +20,9 @@ jobs:
       - name: Default dry-run
         run: snakemake --dry-run --cores 1
         working-directory: geo-rnaseq-mining
+      - name: Default skeleton execution
+        run: snakemake --snakefile workflow/Snakefile --configfile config/config.yaml --cores 1 --printshellcmds
+        working-directory: geo-rnaseq-mining
 
   minimal-e2e:
     runs-on: ubuntu-latest

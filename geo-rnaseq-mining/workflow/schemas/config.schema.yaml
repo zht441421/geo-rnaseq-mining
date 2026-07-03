@@ -775,3 +775,54 @@ properties:
         minLength: 1
   reproducibility:
     type: object
+  mvp:
+    type: object
+    additionalProperties: false
+    required:
+      - enabled
+    properties:
+      enabled:
+        type: boolean
+      dataset_id:
+        type: string
+        minLength: 1
+      contrast_id:
+        type: string
+        minLength: 1
+      config_file:
+        type: string
+        minLength: 1
+      manifest:
+        type: string
+        minLength: 1
+      contrasts:
+        type: string
+        minLength: 1
+      dataset_plan:
+        type: string
+        minLength: 1
+      celltype_ontology:
+        type: string
+        minLength: 1
+      bulk_counts:
+        type: string
+        minLength: 1
+      single_cell_counts:
+        type: string
+        minLength: 1
+    allOf:
+      - if:
+          properties:
+            enabled:
+              const: true
+        then:
+          required:
+            - dataset_id
+            - contrast_id
+            - config_file
+            - manifest
+            - contrasts
+            - dataset_plan
+            - celltype_ontology
+            - bulk_counts
+            - single_cell_counts

@@ -15,11 +15,33 @@ include: "rules/mvp.smk"
 ruleorder: mvp_pipeline > validate_manifest > build_data_inventory > bulk_scrna_integration > render_analysis_report > render_methods_report > build_audit_trail
 
 
+DEFAULT_SKELETON_TARGETS = [
+    rules.validate_authority_config.output,
+    rules.enforce_validation_gate.output,
+    rules.build_data_inventory.output,
+    rules.prepare_raw_metadata.output,
+    rules.generate_metadata_review_report.output,
+    BULK_TARGETS,
+    MULTI_DATASET_TARGETS,
+    SINGLE_CELL_TARGETS,
+    BULK_SCRNA_INTEGRATION_TARGETS,
+    REPORT_TARGETS,
+]
+
+DEFAULT_ALL_TARGETS = MVP_TARGETS if MVP_TARGETS else DEFAULT_SKELETON_TARGETS
+DEFAULT_ALL_OUTPUT = (
+    "results/mvp/all_mvp.complete"
+    if MVP_TARGETS
+    else "results/system/default_skeleton.complete"
+)
+DEFAULT_ALL_MODE = "mvp" if MVP_TARGETS else "skeleton_validation"
+
+
 rule all:
     input:
-        MVP_TARGETS
+        DEFAULT_ALL_TARGETS
     output:
-        "results/mvp/all_mvp.complete"
+        DEFAULT_ALL_OUTPUT
     log:
         "logs/system/all.log"
     benchmark:
@@ -30,35 +52,33 @@ rule all:
         runtime_min=1,
         disk_mb=10
     run:
-        if not MVP_TARGETS:
-            raise ValueError(
-                "Default rule all is the MVP target. Set mvp.enabled=true in "
-                "the config file, or call specific non-MVP rules explicitly."
-            )
         Path(log[0]).parent.mkdir(parents=True, exist_ok=True)
+        if DEFAULT_ALL_MODE == "mvp":
+            message = (
+                "geo-rnaseq-mining explicit MVP fixture targets completed.\n"
+                "This is not proof of real GEO/SRA, native R/Bioconductor, or production analysis execution.\n"
+            )
+            marker = "status\tcomplete\nmode\tmvp_fixture\nproduction_validated\tfalse\n"
+        else:
+            message = (
+                "Default skeleton/validation targets completed for the configured inputs.\n"
+                "This is not proof of real GEO/SRA, native R/Bioconductor, or production analysis execution.\n"
+            )
+            marker = "status\tcomplete\nmode\tskeleton_validation\nproduction_validated\tfalse\n"
         Path(log[0]).write_text(
-            "geo-rnaseq-mining MVP targets completed.\n",
+            message,
             encoding="utf-8",
         )
         Path(output[0]).parent.mkdir(parents=True, exist_ok=True)
         Path(output[0]).write_text(
-            "status\tcomplete\nmode\tmvp\n",
+            marker,
             encoding="utf-8",
         )
 
 
 rule all_full:
     input:
-        rules.validate_authority_config.output,
-        rules.enforce_validation_gate.output,
-        rules.build_data_inventory.output,
-        rules.prepare_raw_metadata.output,
-        rules.generate_metadata_review_report.output,
-        BULK_TARGETS,
-        MULTI_DATASET_TARGETS,
-        SINGLE_CELL_TARGETS,
-        BULK_SCRNA_INTEGRATION_TARGETS,
-        REPORT_TARGETS
+        DEFAULT_SKELETON_TARGETS
     log:
         "logs/system/all_full.log"
     benchmark:
