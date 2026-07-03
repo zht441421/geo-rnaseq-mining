@@ -187,8 +187,18 @@ code {{ background: #f4f6f7; padding: .15rem .3rem; }}
 {render_table(issues, ['severity', 'scope', 'check_id', 'analysis_id', 'dataset_id', 'message'])}
 <h2>Result modules</h2>
 {render_table(module_rows, ['module', 'file_count'])}
+<h2>Test and execution status</h2>
+<p>This report records validation payloads and file hashes only. It does not
+certify any test as passed unless an explicit test-status artifact is provided
+by the workflow.</p>
 <h2>Authority snapshot</h2>
 {render_table(authority_rows, ['path', 'exists', 'sha256'])}
+<h2>Known limitations</h2>
+<ul>
+<li>Suggested metadata, automated cell-type labels, and candidate genes require human review.</li>
+<li>Automated bulk/single-cell integration output is candidate evidence only, not a final biological conclusion.</li>
+<li>Unrun real GEO/SRA network tests and native R/Bioconductor execution must remain visible in handoff or test-status records.</li>
+</ul>
 <h2>Reproducibility</h2>
 <p>Complete file-level hashes are stored in <code>{html.escape(str(output_manifest))}</code>.
 Report provenance is stored in <code>{html.escape(str(output_provenance))}</code>.</p>

@@ -46,6 +46,70 @@ WARNING_FIELDS = ["severity", "scope", "check_id", "analysis_id", "dataset_id", 
 REPRO_FIELDS = ["artifact", "path", "sha256", "description"]
 PACKAGE_FIELDS = ["path", "included", "reason", "size_bytes", "sha256"]
 CHECKSUM_REPORT_FIELDS = ["path", "module", "size_bytes", "sha256"]
+CANDIDATE_SCORE_FIELDS = [
+    "canonical_gene_id",
+    "best_bulk_log2fc",
+    "best_pseudobulk_log2fc",
+    "bulk_pseudobulk_direction",
+    "dominant_cell_type",
+    "limitations",
+    "dataset_driven",
+    "confidence",
+    "is_final_biological_conclusion",
+    "required_action",
+]
+SUGGESTED_ANNOTATION_FIELDS = [
+    "cluster",
+    "suggested_label",
+    "review_status",
+    "is_final",
+    "required_action",
+]
+TEST_STATUS_FIELDS = ["scope", "command", "status", "result", "notes"]
+DEFAULT_TEST_STATUS_ROWS = [
+    {
+        "scope": "unit_tests",
+        "command": 'python -m unittest discover -s tests/unit -p "test_*.py" -v',
+        "status": "not_run_by_workflow",
+        "result": "not_run",
+        "notes": "Run manually and record exact command output in the current session handoff.",
+    },
+    {
+        "scope": "integration_tests",
+        "command": 'python -m unittest discover -s tests/integration -p "test_*.py" -v',
+        "status": "not_run_by_workflow",
+        "result": "not_run",
+        "notes": "Opt-in network/SRA tests may be skipped unless their environment variables are set.",
+    },
+    {
+        "scope": "snakemake_dry_run",
+        "command": "snakemake --snakefile workflow/Snakefile --configfile config/config.yaml --dry-run --quiet",
+        "status": "not_run_by_workflow",
+        "result": "not_run",
+        "notes": "Run manually for the active configuration before claiming DAG readiness.",
+    },
+    {
+        "scope": "all_full_default",
+        "command": "snakemake --snakefile workflow/Snakefile --configfile config/config.yaml --cores 1 all_full --printshellcmds",
+        "status": "not_run_by_workflow",
+        "result": "not_run",
+        "notes": "Default empty-accession run is not evidence of real GEO/SRA or native R/Bioconductor execution.",
+    },
+    {
+        "scope": "real_geo_sra_network",
+        "command": "RUN_GEO_NETWORK_TESTS=1 and RUN_SRA_NETWORK_TESTS=1 with SRA_TEST_ACCESSION",
+        "status": "opt_in_not_run_by_default",
+        "result": "not_run",
+        "notes": "Requires explicit opt-in network test environment.",
+    },
+    {
+        "scope": "native_r_bioconductor",
+        "command": "configured real-accession GEOquery and DESeq2 execution",
+        "status": "not_run_by_workflow",
+        "result": "not_run",
+        "notes": "Validate in Linux, WSL, or a container before claiming real-accession support.",
+    },
+]
 
 
 def now():
@@ -58,6 +122,13 @@ def read_tsv(path):
         return []
     with path.open(encoding="utf-8-sig", newline="") as handle:
         return list(csv.DictReader(handle, delimiter="\t"))
+
+
+def read_many_tsv(paths):
+    rows = []
+    for path in paths or []:
+        rows.extend(read_tsv(path))
+    return rows
 
 
 def write_tsv(path, fieldnames, rows):
@@ -281,6 +352,9 @@ def render_analysis_report(args):
     references = read_tsv(args.references) if getattr(args, "references", None) else []
     checksums = read_tsv(args.checksums) if getattr(args, "checksums", None) else []
     audit = read_tsv(args.audit) if getattr(args, "audit", None) else []
+    candidate_scores = read_many_tsv(getattr(args, "candidate_scores", []))
+    suggested_annotations = read_many_tsv(getattr(args, "suggested_annotations", []))
+    test_status = read_tsv(args.test_status) if getattr(args, "test_status", None) else []
     sections = [
         "Project objective",
         "Input GSE",
@@ -303,6 +377,8 @@ def render_analysis_report(args):
         "Meta-analysis",
         "Leave-one-dataset-out",
         "Bulk and single-cell joint results",
+        "Automated review status",
+        "Test and execution status",
         "Warnings",
         "Known limitations",
         "Complete reproduction command",
@@ -313,6 +389,7 @@ def render_analysis_report(args):
         "</head><body>",
         f"<h1>{html.escape(config['reporting']['title'])}</h1>",
         "<p>Conclusion language is constrained to association, enrichment, potential cellular source, replicated observation, or hypothesis unless explicit cause-and-effect evidence is supplied.</p>",
+        "<p>Automated annotations and bulk/single-cell candidate genes are review queues, not final biological conclusions.</p>",
     ]
     for section in sections:
         body.append(f"<h2>{html.escape(section)}</h2>")
@@ -339,8 +416,20 @@ def render_analysis_report(args):
             body.append(table(contrasts, ["analysis_id", "contrast_id", "data_scope", "design_formula", "paired"]))
         elif section == "Warnings":
             body.append(table(warnings, WARNING_FIELDS))
+        elif section == "Bulk and single-cell joint results":
+            body.append("<p>Candidate genes are hypothesis-generating integration evidence and require human review before biological interpretation.</p>")
+            body.append(table(candidate_scores, CANDIDATE_SCORE_FIELDS))
+        elif section == "Automated review status":
+            body.append("<p>Automated cell-type suggestions and candidate gene scores are not reviewed authority unless their own review fields say so.</p>")
+            body.append(table(suggested_annotations, SUGGESTED_ANNOTATION_FIELDS))
+            body.append(table(candidate_scores, ["canonical_gene_id", "is_final_biological_conclusion", "required_action", "confidence", "limitations"]))
+        elif section == "Test and execution status":
+            if test_status:
+                body.append(table(test_status, TEST_STATUS_FIELDS))
+            else:
+                body.append("<p>No machine-readable test status file was supplied to this report; no tests are reported as passed by the HTML report.</p>")
         elif section == "Known limitations":
-            body.append("<ul><li>Unconfirmed authority fields are not interpreted as facts.</li><li>Dominant cell type means potential cellular source only, not cause-and-effect source.</li><li>Deconvolution cannot by itself establish cell movement, disease origin, or pathway-of-action claims.</li></ul>")
+            body.append("<ul><li>Unconfirmed authority fields are not interpreted as facts.</li><li>Automated cell-type labels and candidate genes require human review before final interpretation.</li><li>Single-GSE support, ambiguous gene mapping, failed validation, and opposite bulk/pseudobulk direction limit confidence.</li><li>Raw integer counts are required for DESeq2, and pseudobulk replicate units must remain subject/group/cell type.</li><li>Dominant cell type means potential cellular source only, not cause-and-effect source.</li><li>Deconvolution cannot by itself establish cell movement, disease origin, or pathway-of-action claims.</li></ul>")
         elif section == "Complete reproduction command":
             body.append("<pre>snakemake --snakefile workflow/Snakefile --directory . --configfile config/config.yaml --use-conda --cores &lt;N&gt;</pre>")
         else:
@@ -474,6 +563,15 @@ def snapshot_parameters(args):
     Path(args.marker).write_text("parameter_snapshot=complete\n", encoding="utf-8")
 
 
+def write_test_status(args):
+    write_tsv(args.output, TEST_STATUS_FIELDS, DEFAULT_TEST_STATUS_ROWS)
+    Path(args.marker).write_text(
+        f"test_status_records={len(DEFAULT_TEST_STATUS_ROWS)}\n"
+        "result=not_run_by_workflow\n",
+        encoding="utf-8",
+    )
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Final reporting utilities.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -506,6 +604,9 @@ def parse_args():
     p.add_argument("--references")
     p.add_argument("--checksums")
     p.add_argument("--audit")
+    p.add_argument("--candidate-scores", nargs="*", default=[])
+    p.add_argument("--suggested-annotations", nargs="*", default=[])
+    p.add_argument("--test-status")
     p.add_argument("--validation-report")
     p.add_argument("--validation-output")
     p.add_argument("--output", required=True)
@@ -527,6 +628,9 @@ def parse_args():
     p.add_argument("--marker", required=True)
     p = sub.add_parser("snapshot_parameters")
     p.add_argument("--config", required=True)
+    p.add_argument("--output", required=True)
+    p.add_argument("--marker", required=True)
+    p = sub.add_parser("write_test_status")
     p.add_argument("--output", required=True)
     p.add_argument("--marker", required=True)
     return parser.parse_args()

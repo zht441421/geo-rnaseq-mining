@@ -22,7 +22,9 @@ def json_pretty(value):
         return escaped(value)
 
 
-def render_report(manifest, conflicts, unmapped):
+def render_report(manifest, conflicts, unmapped, dataset_plan=None, classification=None):
+    dataset_plan = dataset_plan or []
+    classification = classification or []
     conflicts_by_gsm = defaultdict(list)
     for conflict in conflicts:
         conflicts_by_gsm[conflict.get("gsm_id", NA)].append(conflict)
@@ -115,6 +117,7 @@ def render_report(manifest, conflicts, unmapped):
   <p>Generated at {escaped(utc_now())}</p>
   <p class="notice"><strong>Human review required.</strong> Suggestions are not formal analysis metadata and must not be copied automatically.</p>
   <p>Manifest rows: {len(manifest)}; conflicts/warnings: {len(conflicts)}; unmapped records: {len(unmapped)}.</p>
+  <p>Suggested dataset plan rows: {len(dataset_plan)}; suggested data-entry classifications: {len(classification)}.</p>
   <h2>Unmapped records</h2>
   <table><thead><tr><th>GSE</th><th>GSM</th><th>SRX</th><th>SRR</th><th>Reason</th></tr></thead>
   <tbody>{unmapped_rows}</tbody></table>
@@ -131,6 +134,8 @@ def parse_args():
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--conflicts", required=True)
     parser.add_argument("--unmapped-runs", required=True)
+    parser.add_argument("--dataset-plan")
+    parser.add_argument("--data-entry-classification")
     parser.add_argument("--output", required=True)
     return parser.parse_args()
 
@@ -144,6 +149,10 @@ def main():
             read_tsv(args.manifest),
             read_tsv(args.conflicts),
             read_tsv(args.unmapped_runs),
+            read_tsv(args.dataset_plan) if args.dataset_plan else [],
+            read_tsv(args.data_entry_classification)
+            if args.data_entry_classification
+            else [],
         ),
         encoding="utf-8",
     )

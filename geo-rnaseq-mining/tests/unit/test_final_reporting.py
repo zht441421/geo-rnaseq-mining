@@ -20,6 +20,7 @@ from final_reporting import (
     package_results,
     render_analysis_report,
     render_methods_report,
+    write_test_status,
 )
 
 
@@ -96,6 +97,23 @@ class FinalReportingTest(unittest.TestCase):
         self.assertTrue(any(name.endswith("table.tsv") for name in names))
         self.assertFalse(any(name.endswith("reads.fastq.gz") for name in names))
 
+    def test_default_test_status_records_do_not_claim_passed(self):
+        root = self._tmp()
+        write_test_status(
+            argparse.Namespace(
+                output=str(root / "test_status.tsv"),
+                marker=str(root / "test_status.complete"),
+            )
+        )
+
+        rows = read_tsv(root / "test_status.tsv")
+        self.assertGreaterEqual(len(rows), 4)
+        self.assertTrue(all(row["result"] != "passed" for row in rows))
+        self.assertTrue(any(row["scope"] == "real_geo_sra_network" for row in rows))
+        self.assertTrue(
+            any(row["status"] == "opt_in_not_run_by_default" for row in rows)
+        )
+
     def test_reports_state_unconfirmed_fields_are_not_facts(self):
         root = self._tmp()
         config = {
@@ -168,6 +186,7 @@ class FinalReportingTest(unittest.TestCase):
         )
         html = (root / "analysis_report.html").read_text(encoding="utf-8")
         self.assertIn("Suggestions are not facts", html)
+        self.assertIn("no tests are reported as passed", html)
         self.assertIn("potential cellular source only", html)
         self.assertIn("Each contrast", html)
         self.assertIn("Design formula", html)
@@ -177,6 +196,82 @@ class FinalReportingTest(unittest.TestCase):
         self.assertIn("Reference genome and GTF", html)
         self.assertNotIn(" driver ", html.lower())
         self.assertNotIn(" mechanism", html.lower())
+
+    def test_report_surfaces_candidate_and_annotation_review_limits(self):
+        root = self._tmp()
+        config = {
+            "project": {"name": "demo", "description": "Demo association study"},
+            "reporting": {"title": "Demo Report"},
+            "references": {},
+        }
+        config_path = root / "config.yaml"
+        config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+        manifest = root / "manifest.tsv"
+        manifest.write_text(
+            "dataset_id\tsample_id\treview_status\tinclude\nGSE1\tS1\tconfirmed\ttrue\n",
+            encoding="utf-8",
+        )
+        contrasts = root / "contrasts.tsv"
+        contrasts.write_text(
+            "analysis_id\tcontrast_id\tdata_scope\tnumerator\tdenominator\tdesign_formula\tpaired\tenabled\n"
+            "A1\tC1\tbulk\tcase\tcontrol\t~ group\tfalse\ttrue\n",
+            encoding="utf-8",
+        )
+        plan = root / "dataset_plan.tsv"
+        plan.write_text(
+            "analysis_id\tdataset_id\tinclude\trole\tanalysis_strategy\treference_dataset\n"
+            "A1\tGSE1\ttrue\tdiscovery\tper_dataset\tNA\n",
+            encoding="utf-8",
+        )
+        warnings = root / "warnings.tsv"
+        warnings.write_text(
+            "severity\tscope\tcheck_id\tanalysis_id\tdataset_id\tmessage\n",
+            encoding="utf-8",
+        )
+        candidate_scores = root / "candidate_gene_scores.tsv"
+        candidate_scores.write_text(
+            "canonical_gene_id\tbest_bulk_log2fc\tbest_pseudobulk_log2fc\tbulk_pseudobulk_direction\tdominant_cell_type\tlimitations\tdataset_driven\tconfidence\tis_final_biological_conclusion\trequired_action\n"
+            "GENE1\t1.2\t-0.8\topposite\tT cell\tbulk_pseudobulk_opposite_direction;single_gse_support\ttrue\tlimited\tfalse\thuman_review_required\n",
+            encoding="utf-8",
+        )
+        suggestions = root / "suggested_annotations.tsv"
+        suggestions.write_text(
+            "cluster\tsuggested_label\treview_status\tis_final\trequired_action\n"
+            "0\tT cell\tnot_reviewed\tfalse\thuman_review_required\n",
+            encoding="utf-8",
+        )
+
+        render_analysis_report(
+            argparse.Namespace(
+                config=str(config_path),
+                manifest=str(manifest),
+                contrasts=str(contrasts),
+                dataset_plan=str(plan),
+                warnings=str(warnings),
+                exclusions=str(root / "exclusions.tsv"),
+                software=None,
+                references=None,
+                checksums=None,
+                audit=None,
+                candidate_scores=[str(candidate_scores)],
+                suggested_annotations=[str(suggestions)],
+                test_status=None,
+                validation_report=None,
+                validation_output=None,
+                output=str(root / "analysis_report.html"),
+                marker=str(root / "analysis.complete"),
+            )
+        )
+
+        html = (root / "analysis_report.html").read_text(encoding="utf-8")
+        self.assertIn("Candidate genes are hypothesis-generating", html)
+        self.assertIn("Automated review status", html)
+        self.assertIn("GENE1", html)
+        self.assertIn("bulk_pseudobulk_opposite_direction", html)
+        self.assertIn("single_gse_support", html)
+        self.assertIn("limited", html)
+        self.assertIn("human_review_required", html)
+        self.assertIn("not final biological conclusions", html)
 
     def test_methods_report_includes_software_and_references(self):
         root = self._tmp()

@@ -5,6 +5,15 @@ REPORT_TARGETS = (
 )
 
 
+def optional_report_args(flag, paths):
+    if isinstance(paths, str):
+        paths = [paths]
+    paths = [str(path) for path in paths if path]
+    if not paths:
+        return ""
+    return f"{flag} " + " ".join(f'"{path}"' for path in paths)
+
+
 rule collect_provenance:
     input:
         config="config/config.yaml"
@@ -108,6 +117,31 @@ rule snapshot_reporting_parameters:
         """
 
 
+rule collect_test_status:
+    input:
+        config="config/config.yaml"
+    output:
+        marker=f"{REPORT_ROOT}/test_status.complete",
+        status=f"{REPORT_ROOT}/test_status.tsv"
+    log:
+        "logs/reporting/test_status.log"
+    benchmark:
+        "benchmarks/reporting/test_status.tsv"
+    conda:
+        "../envs/base.yaml"
+    threads: 1
+    resources:
+        mem_mb=config["resources"]["default"]["mem_mb"],
+        runtime_min=config["resources"]["default"]["runtime_min"],
+        disk_mb=config["resources"]["default"]["disk_mb"]
+    shell:
+        """
+        python workflow/scripts/final_reporting.py write_test_status \
+          --output {output.status:q} \
+          --marker {output.marker:q} > {log:q} 2>&1
+        """
+
+
 rule build_audit_trail:
     input:
         config="config/config.yaml",
@@ -164,7 +198,21 @@ rule render_analysis_report:
         software=rules.collect_software_versions.output.versions,
         references=rules.collect_reference_metadata.output.versions,
         checksums=rules.collect_provenance.output.checksums,
-        validation_report=rules.generate_validation_report.output.report
+        test_status=rules.collect_test_status.output.status,
+        validation_report=rules.generate_validation_report.output.report,
+        candidate_scores=(
+            rules.bulk_scrna_integration.output.candidate_scores
+            if BULK_SCRNA_INTEGRATION_ENABLED
+            else []
+        ),
+        suggested_annotations=(
+            expand(
+                f"{SINGLE_CELL_ROOT}/{{dataset}}/single_cell/markers/suggested_annotations.tsv",
+                dataset=SINGLE_CELL_DATASETS,
+            )
+            if SINGLE_CELL_ENABLED
+            else []
+        )
     output:
         marker=f"{REPORT_ROOT}/analysis_report.complete",
         html=f"{REPORT_ROOT}/analysis_report.html",
@@ -180,6 +228,15 @@ rule render_analysis_report:
         mem_mb=config["resources"]["default"]["mem_mb"],
         runtime_min=config["resources"]["default"]["runtime_min"],
         disk_mb=config["resources"]["default"]["disk_mb"]
+    params:
+        candidate_scores=lambda wildcards, input: optional_report_args(
+            "--candidate-scores",
+            input.candidate_scores,
+        ),
+        suggested_annotations=lambda wildcards, input: optional_report_args(
+            "--suggested-annotations",
+            input.suggested_annotations,
+        )
     shell:
         """
         python workflow/scripts/final_reporting.py render_analysis_report \
@@ -193,6 +250,9 @@ rule render_analysis_report:
           --references {input.references:q} \
           --checksums {input.checksums:q} \
           --audit {input.audit:q} \
+          --test-status {input.test_status:q} \
+          {params.candidate_scores} \
+          {params.suggested_annotations} \
           --validation-report {input.validation_report:q} \
           --validation-output {output.validation:q} \
           --output {output.html:q} \
@@ -205,7 +265,8 @@ rule render_methods_report:
         config="config/config.yaml",
         software=rules.collect_software_versions.output.versions,
         references=rules.collect_reference_metadata.output.versions,
-        parameters=rules.snapshot_reporting_parameters.output.snapshot
+        parameters=rules.snapshot_reporting_parameters.output.snapshot,
+        test_status=rules.collect_test_status.output.status
     output:
         marker=f"{REPORT_ROOT}/methods.complete",
         methods=f"{REPORT_ROOT}/methods.md"
@@ -239,6 +300,7 @@ rule build_reproducibility_manifest:
         references=rules.collect_reference_metadata.output.versions,
         checksums=rules.collect_provenance.output.checksums,
         parameters=rules.snapshot_reporting_parameters.output.snapshot,
+        test_status=rules.collect_test_status.output.status,
         audit=rules.build_audit_trail.output.audit,
         exclusions=rules.build_audit_trail.output.exclusions,
         warnings=rules.build_audit_trail.output.warnings
@@ -261,7 +323,8 @@ rule build_reproducibility_manifest:
         python workflow/scripts/final_reporting.py reproducibility_manifest \
           --artifacts {input.analysis:q} {input.methods:q} {input.software:q} \
                       {input.references:q} {input.checksums:q} \
-                      {input.parameters:q} {input.audit:q} \
+                      {input.parameters:q} {input.test_status:q} \
+                      {input.audit:q} \
                       {input.exclusions:q} {input.warnings:q} \
           --output {output.manifest:q} \
           --marker {output.marker:q} > {log:q} 2>&1
