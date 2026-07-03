@@ -18,6 +18,31 @@ import yaml
 
 
 NA = "NA"
+REQUIRED_MANIFEST_COLUMNS = {
+    "dataset_id",
+    "sample_id",
+    "subject_id",
+    "include",
+    "group",
+    "data_type",
+    "matrix_path",
+    "review_status",
+}
+REQUIRED_CONTRAST_COLUMNS = {
+    "contrast_id",
+    "analysis_id",
+    "numerator",
+    "denominator",
+    "design_formula",
+    "enabled",
+}
+REQUIRED_DATASET_PLAN_COLUMNS = {
+    "analysis_id",
+    "dataset_id",
+    "include",
+    "role",
+    "analysis_strategy",
+}
 
 
 def now():
@@ -104,6 +129,26 @@ def read_count_matrix(path):
 def validate_manifest(manifest, contrasts, plan, counts):
     errors = []
     warnings = []
+    if not manifest:
+        errors.append(issue("critical", "manifest", "EMPTY_MANIFEST", NA, NA))
+        return [], errors, warnings
+    missing_manifest_columns = REQUIRED_MANIFEST_COLUMNS - set(manifest[0])
+    for column in sorted(missing_manifest_columns):
+        errors.append(
+            issue("critical", "manifest", "MISSING_REQUIRED_MANIFEST_COLUMN", NA, NA, column=column)
+        )
+    if contrasts:
+        missing_contrast_columns = REQUIRED_CONTRAST_COLUMNS - set(contrasts[0])
+        for column in sorted(missing_contrast_columns):
+            errors.append(
+                issue("critical", "contrast", "MISSING_REQUIRED_CONTRAST_COLUMN", NA, NA, column=column)
+            )
+    if plan:
+        missing_plan_columns = REQUIRED_DATASET_PLAN_COLUMNS - set(plan[0])
+        for column in sorted(missing_plan_columns):
+            errors.append(
+                issue("critical", "dataset_plan", "MISSING_REQUIRED_DATASET_PLAN_COLUMN", NA, NA, column=column)
+            )
     allowed_include = {"true", "false"}
     allowed_status = {"confirmed", "pending", "excluded"}
     sample_ids = [row.get("sample_id", "") for row in manifest]
@@ -123,6 +168,10 @@ def validate_manifest(manifest, contrasts, plan, counts):
             errors.append(issue("critical", "manifest", "INCLUDED_SAMPLE_NOT_CONFIRMED", dataset_id, sample_id))
         if status == "excluded" and include == "true":
             errors.append(issue("critical", "manifest", "EXCLUDED_SAMPLE_INCLUDED", dataset_id, sample_id))
+        if include == "true" and "bulk" in row.get("data_type", "").lower() and is_missing(row.get("group")):
+            errors.append(issue("critical", "manifest", "INCLUDED_BULK_SAMPLE_MISSING_GROUP", dataset_id, sample_id))
+        if include == "true" and "single" in row.get("data_type", "").lower() and is_missing(row.get("subject_id")):
+            errors.append(issue("critical", "manifest", "INCLUDED_SINGLE_CELL_SAMPLE_MISSING_SUBJECT_ID", dataset_id, sample_id))
     included = [row for row in manifest if truth(row.get("include")) and row.get("review_status") == "confirmed"]
     groups = {row.get("group") for row in included if not is_missing(row.get("group"))}
     datasets = {row.get("dataset_id") for row in included}
@@ -137,11 +186,17 @@ def validate_manifest(manifest, contrasts, plan, counts):
             for var in design_terms(contrast.get("design_formula", "")):
                 if var not in manifest[0]:
                     errors.append(issue("critical", "design", "DESIGN_VARIABLE_NOT_FOUND", contrast.get("analysis_id", NA), contrast_id, variable=var))
+            rank_issue = validate_design_rank(included, contrast)
+            if rank_issue:
+                errors.append(rank_issue)
     for row in plan:
         if truth(row.get("include", "true")) and row.get("dataset_id") not in datasets:
             errors.append(issue("critical", "dataset_plan", "DATASET_NOT_IN_MANIFEST", row.get("analysis_id", NA), row.get("dataset_id", NA)))
-        if row.get("role") == "validation" and row.get("analysis_strategy") in {"joint_model", "per_dataset_meta"}:
-            warnings.append(issue("warning", "dataset_plan", "VALIDATION_DATASET_DECLARED", row.get("analysis_id", NA), row.get("dataset_id", NA)))
+        if row.get("role") == "validation" and row.get("analysis_strategy") in {"joint_model", "per_dataset_meta", "discovery"}:
+            errors.append(issue("critical", "dataset_plan", "VALIDATION_DATASET_IN_DISCOVERY_MODEL", row.get("analysis_id", NA), row.get("dataset_id", NA)))
+    confounded = joint_model_confounded(plan, included)
+    if confounded:
+        errors.append(confounded)
     count_samples = list(counts.columns[1:])
     included_bulk = [row["sample_id"] for row in included if "bulk" in row.get("data_type", "").lower()]
     if count_samples != included_bulk:
@@ -185,6 +240,71 @@ def design_terms(formula):
     return terms
 
 
+def validate_design_rank(rows, contrast):
+    terms = design_terms(contrast.get("design_formula", ""))
+    if not rows or not terms:
+        return None
+    data = pd.DataFrame(rows)
+    for term in terms:
+        if term not in data.columns:
+            return None
+    design_parts = [pd.Series(1.0, index=data.index, name="Intercept")]
+    for term in terms:
+        values = data[term]
+        numeric = pd.to_numeric(values, errors="coerce")
+        if numeric.notna().all():
+            design_parts.append(numeric.astype(float).rename(term))
+        else:
+            dummies = pd.get_dummies(values.astype(str), prefix=term, drop_first=True, dtype=float)
+            if dummies.empty:
+                design_parts.append(pd.Series(0.0, index=data.index, name=f"{term}_constant"))
+            else:
+                design_parts.append(dummies)
+    design = pd.concat(design_parts, axis=1)
+    rank = int(np.linalg.matrix_rank(design.to_numpy(dtype=float)))
+    if rank < design.shape[1]:
+        return issue(
+            "critical",
+            "design",
+            "DESIGN_MATRIX_NOT_FULL_RANK",
+            contrast.get("analysis_id", NA),
+            contrast.get("contrast_id", NA),
+            rank=rank,
+            columns=design.shape[1],
+        )
+    return None
+
+
+def joint_model_confounded(plan, included):
+    joint_dataset_ids = {
+        row.get("dataset_id")
+        for row in plan
+        if truth(row.get("include", "true")) and row.get("analysis_strategy") == "joint_model"
+    }
+    if len(joint_dataset_ids) < 2:
+        return None
+    rows = [
+        row
+        for row in included
+        if row.get("dataset_id") in joint_dataset_ids
+        and not is_missing(row.get("group"))
+    ]
+    if not rows:
+        return None
+    data = pd.DataFrame(rows)
+    dataset_groups = data.groupby("dataset_id")["group"].nunique()
+    group_datasets = data.groupby("group")["dataset_id"].nunique()
+    if (dataset_groups == 1).all() and (group_datasets == 1).all():
+        return issue(
+            "critical",
+            "dataset_plan",
+            "JOINT_MODEL_DATASET_GROUP_COMPLETELY_CONFOUNDED",
+            ";".join(sorted(joint_dataset_ids)),
+            NA,
+        )
+    return None
+
+
 def write_validation_outputs(outdir, manifest, included, errors, warnings, contrasts, plan):
     write_tsv(outdir / "validated_manifest.tsv", included or manifest)
     write_tsv(outdir / "manifest_errors.tsv", errors, validation_fields())
@@ -206,7 +326,21 @@ def write_validation_outputs(outdir, manifest, included, errors, warnings, contr
 
 
 def validation_fields():
-    return ["severity", "scope", "check_id", "dataset_id", "sample_id", "message", "required_fix", "group", "variable", "expected"]
+    return [
+        "severity",
+        "scope",
+        "check_id",
+        "dataset_id",
+        "sample_id",
+        "message",
+        "required_fix",
+        "group",
+        "variable",
+        "expected",
+        "column",
+        "rank",
+        "columns",
+    ]
 
 
 def write_data_inventory(outdir, included, counts_path, sc_path):
@@ -291,6 +425,10 @@ def read_single_cell_counts(path):
     missing = required - set(df.columns)
     if missing:
         raise ValueError(f"Single-cell fixture missing columns: {sorted(missing)}")
+    if df["subject_id"].map(is_missing).any():
+        raise ValueError("Single-cell pseudobulk requires subject_id for every cell")
+    if df["group"].map(is_missing).any():
+        raise ValueError("Single-cell pseudobulk requires group for every cell")
     cell_meta = df[["cell_id", "dataset_id", "sample_id", "subject_id", "group", "cell_type"]].drop_duplicates()
     if cell_meta["cell_id"].duplicated().any():
         dupes = sorted(cell_meta.loc[cell_meta["cell_id"].duplicated(), "cell_id"].astype(str).unique())
@@ -399,16 +537,45 @@ def write_integration(root, counts, sc_df):
     write_tsv(out / "unmapped_genes.tsv", [{"original_gene_id": NA, "mapping_status": "none", "reason": "identity mapping used for all MVP fixture genes"}])
 
 
-def write_provenance(root, inputs, manifest):
+def write_provenance(root, inputs, manifest, config_path, analysis_id, contrast_id, dataset_id, result_paths=None):
     out = root / "results" / "provenance"
     files = []
     for path in inputs:
         files.append({"path": str(path), "sha256": sha256_file(path), "timestamp": now()})
-    result_files = [p for p in (root / "results").rglob("*") if p.is_file()]
+    if result_paths is None:
+        result_files = [
+            p
+            for p in (root / "results").rglob("*")
+            if p.is_file() and p.name != ".gitkeep"
+        ]
+    else:
+        result_files = [Path(path) for path in result_paths if Path(path).is_file()]
     write_tsv(out / "input_file_provenance.tsv", files)
     write_tsv(out / "checksum_manifest.tsv", [{"path": str(p), "sha256": sha256_file(p)} for p in result_files if "provenance" not in p.parts])
     write_tsv(out / "manifest_trace.tsv", [{"sample_id": r.get("sample_id", NA), "dataset_id": r.get("dataset_id", NA), "include": r.get("include", NA), "review_status": r.get("review_status", NA)} for r in manifest])
-    write_tsv(out / "result_file_provenance.tsv", [{"result_file": str(p), "producing_rule": "mvp_pipeline", "script": "workflow/scripts/run_mvp_pipeline.py", "git_commit": git_commit()} for p in result_files])
+    input_files = ";".join(str(path) for path in inputs)
+    input_checksums = ";".join(f"{path}:{sha256_file(path)}" for path in inputs)
+    timestamp = now()
+    write_tsv(
+        out / "result_file_provenance.tsv",
+        [
+            {
+                "result_file": str(p),
+                "producing_rule": "mvp_pipeline",
+                "input_files": input_files,
+                "input_checksums": input_checksums,
+                "script": "workflow/scripts/run_mvp_pipeline.py",
+                "config": str(config_path),
+                "analysis_id": analysis_id,
+                "contrast_id": contrast_id,
+                "dataset_id": dataset_id,
+                "manifest_rows": len(manifest),
+                "timestamp": timestamp,
+                "git_commit": git_commit(),
+            }
+            for p in result_files
+        ],
+    )
 
 
 def git_commit():
@@ -416,16 +583,37 @@ def git_commit():
     return completed.stdout.strip() if completed.returncode == 0 else NA
 
 
+def table_count(path):
+    path = Path(path)
+    if not path.is_file():
+        return 0
+    with path.open(encoding="utf-8") as handle:
+        return max(sum(1 for _ in handle) - 1, 0)
+
+
 def write_reports(root, included, contrasts, plan):
     out = root / "results" / "reports"
     warnings = [{"severity": "warning", "scope": "mvp", "message": "DESeq2 results are skipped unless DESeq2 is available; no causal, driver, or mechanism claims are made."}]
     write_tsv(out / "warnings.tsv", warnings)
     write_tsv(out / "reproducibility_manifest.tsv", [{"command": "snakemake all --cores 1 --configfile tests/fixtures/config/test_config.yaml", "git_commit": git_commit()}])
+    compat = root / "results" / "compatibility"
+    dataset_id = included[0]["dataset_id"] if included else NA
+    bulk_dir = root / "results" / "per_dataset" / dataset_id / "bulk"
+    sc_dir = root / "results" / "per_dataset" / dataset_id / "single_cell"
+    pb_dir = root / "results" / "per_dataset" / dataset_id / "pseudobulk"
     html_text = (
         "<html><body><h1>geo-rnaseq-mining MVP analysis report</h1>"
         f"<p>Included samples: {len(included)}</p>"
         f"<p>Contrasts: {html.escape(';'.join(c.get('contrast_id', NA) for c in contrasts))}</p>"
         f"<p>Dataset plan rows: {len(plan)}</p>"
+        f"<p>Validation errors: {table_count(compat / 'manifest_errors.tsv')}</p>"
+        f"<p>Validation warnings: {table_count(compat / 'manifest_warnings.tsv')}</p>"
+        f"<p>Bulk QC rows: {table_count(bulk_dir / 'sample_qc.tsv')}</p>"
+        f"<p>Single-cell QC rows: {table_count(sc_dir / 'cell_qc.tsv')}</p>"
+        f"<p>Pseudobulk sample rows: {table_count(pb_dir / 'pseudobulk_sample_metadata.tsv')}</p>"
+        f"<p>Meta-analysis rows: {table_count(root / 'results' / 'meta_analysis' / 'bulk' / ('meta_results_' + (contrasts[0].get('contrast_id', 'contrast') if contrasts else 'contrast') + '.tsv'))}</p>"
+        f"<p>Integration mapping rows: {table_count(root / 'results' / 'integration' / 'gene_celltype_mapping.tsv')}</p>"
+        f"<p>Provenance result rows: {table_count(root / 'results' / 'provenance' / 'result_file_provenance.tsv')}</p>"
         "<p>Interpretation is limited to association, enrichment, potential cellular source, replicated observation, or hypothesis.</p>"
         "<p>Known limitation: formal DESeq2 statistics require an R/DESeq2 environment.</p>"
         "</body></html>\n"
@@ -436,6 +624,52 @@ def write_reports(root, included, contrasts, plan):
         "# Methods\n\nMVP run validates reviewed inputs, checks raw integer counts, aggregates subject-level pseudobulk from raw counts, records provenance, and avoids causal wording.\n",
         encoding="utf-8",
     )
+
+
+def mvp_result_paths(root, dataset_id, contrast_id):
+    root = Path(root)
+    bulk = root / "results" / "per_dataset" / dataset_id / "bulk"
+    sc = root / "results" / "per_dataset" / dataset_id / "single_cell"
+    pb = root / "results" / "per_dataset" / dataset_id / "pseudobulk"
+    return [
+        root / "results" / "compatibility" / name
+        for name in [
+            "validated_manifest.tsv",
+            "manifest_errors.tsv",
+            "manifest_warnings.tsv",
+            "contrast_validation.tsv",
+            "dataset_plan_validation.tsv",
+            "design_matrix_validation.tsv",
+            "validation_report.html",
+            "data_inventory.tsv",
+        ]
+    ] + [
+        bulk / "counts_validated.tsv",
+        bulk / "sample_qc.tsv",
+        bulk / "normalized_counts.tsv",
+        bulk / "pca_coordinates.tsv",
+        bulk / f"deseq2_environment_error_{contrast_id}.tsv",
+        bulk / "deseq2_session_info.txt",
+        bulk / "bulk_analysis.log",
+        sc / "processed.h5ad",
+        sc / "cell_qc.tsv",
+        sc / "sample_cell_counts.tsv",
+        pb / "pseudobulk_counts_Tcell.tsv",
+        pb / "pseudobulk_sample_metadata.tsv",
+        pb / "pseudobulk_eligibility.tsv",
+        pb / "skipped_celltypes.tsv",
+        pb / "pseudobulk_analysis.log",
+        root / "results" / "meta_analysis" / "bulk" / f"meta_results_{contrast_id}.tsv",
+        root / "results" / "integration" / "gene_celltype_mapping.tsv",
+        root / "results" / "integration" / "bulk_scrna_concordance.tsv",
+        root / "results" / "integration" / "candidate_gene_scores.tsv",
+        root / "results" / "integration" / "unmapped_genes.tsv",
+        root / "results" / "reports" / "analysis_report.html",
+        root / "results" / "reports" / "methods.md",
+        root / "results" / "reports" / "warnings.tsv",
+        root / "results" / "reports" / "reproducibility_manifest.tsv",
+        root / "results" / "mvp" / ".complete",
+    ]
 
 
 def main():
@@ -475,7 +709,24 @@ def main():
     )
     write_meta(root, contrast_id)
     write_integration(root, counts, sc_df)
-    write_provenance(root, [Path(args.config), Path(args.manifest), Path(args.contrasts), Path(args.dataset_plan), Path(args.bulk_counts), Path(args.single_cell_counts)], manifest)
+    write_provenance(
+        root,
+        [
+            Path(args.config),
+            Path(args.manifest),
+            Path(args.contrasts),
+            Path(args.dataset_plan),
+            Path(args.ontology),
+            Path(args.bulk_counts),
+            Path(args.single_cell_counts),
+        ],
+        manifest,
+        Path(args.config),
+        config.get("project", {}).get("analysis_id", NA),
+        contrast_id,
+        dataset_id,
+        mvp_result_paths(root, dataset_id, contrast_id),
+    )
     write_reports(root, included, contrasts, plan)
     done = Path(args.done)
     done.parent.mkdir(parents=True, exist_ok=True)
