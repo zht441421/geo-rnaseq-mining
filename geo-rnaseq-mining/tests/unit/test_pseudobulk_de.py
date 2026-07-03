@@ -161,8 +161,37 @@ class PseudobulkDETests(unittest.TestCase):
                 root / "metrics.tsv", root / "provenance.json",
             )
             metadata = pd.read_csv(root / "metadata.tsv", sep="\t")
+            provenance = json.loads(
+                (root / "provenance.json").read_text(encoding="utf-8")
+            )
         self.assertEqual("ineligible", metadata.loc[0, "eligibility"])
         self.assertIn("min_cells_per_pseudobulk", metadata.loc[0, "exclusion_reason"])
+        self.assertEqual(1, provenance["ineligible_pseudobulk_count"])
+        self.assertEqual(2, provenance["min_cells_per_pseudobulk"])
+        self.assertFalse(provenance["cell_replication_used"])
+
+    def test_same_subject_same_group_samples_are_merged(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = root / "clustered.h5ad"
+            rows = pb_rows(
+                "GSE1",
+                [("P1", "S1", "case"), ("P1", "S2", "case")],
+            )
+            clustered(path, rows)
+            prepare_pseudobulk(
+                config(), ontology(), "GSE1", path,
+                root / "counts.tsv", root / "metadata.tsv",
+                root / "metrics.tsv", root / "provenance.json",
+            )
+            counts = pd.read_csv(root / "counts.tsv", sep="\t")
+            metadata = pd.read_csv(root / "metadata.tsv", sep="\t")
+        self.assertEqual(1, len(metadata))
+        self.assertEqual("P1", metadata.loc[0, "subject_id"])
+        self.assertEqual("multiple", metadata.loc[0, "sample_id"])
+        self.assertEqual("S1;S2", metadata.loc[0, "sample_ids"])
+        self.assertEqual(4, metadata.loc[0, "cell_count"])
+        self.assertEqual(["gene_id", "PB00001"], list(counts.columns))
 
     def test_log_matrix_without_counts_layer_is_rejected(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -259,6 +288,23 @@ class PseudobulkDETests(unittest.TestCase):
             )
         self.assertEqual("mixed", result[0]["direction_consistency"])
         self.assertEqual(2, result[0]["n_datasets"])
+
+    def test_pseudobulk_r_script_validates_counts_before_coercion(self):
+        source = (
+            PROJECT_ROOT
+            / "workflow"
+            / "scripts"
+            / "run_single_cell_pseudobulk_deseq2.R"
+        ).read_text(encoding="utf-8")
+        self.assertIn("validate_pseudobulk_counts <- function", source)
+        self.assertIn(
+            "Pseudobulk DESeq2 requires finite non-negative integer raw aggregated counts",
+            source,
+        )
+        self.assertLess(
+            source.index("validate_pseudobulk_counts(counts_frame)"),
+            source.index("rownames(count_matrix) <- counts_frame$gene_id"),
+        )
 
 
 if __name__ == "__main__":

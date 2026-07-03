@@ -35,6 +35,32 @@ safe_name <- function(value) {
   gsub("[^A-Za-z0-9_.-]", "_", value)
 }
 
+validate_pseudobulk_counts <- function(frame) {
+  if (ncol(frame) < 2) {
+    stop("Pseudobulk DESeq2 requires at least one pseudobulk count column")
+  }
+  if (anyDuplicated(frame[[1]])) {
+    stop("Pseudobulk DESeq2 input contains duplicate gene IDs")
+  }
+  values <- as.matrix(frame[, -1, drop = FALSE])
+  numeric_values <- suppressWarnings(matrix(
+    as.numeric(values),
+    nrow = nrow(values),
+    dimnames = dimnames(values)
+  ))
+  if (any(is.na(numeric_values)) || any(!is.finite(numeric_values))) {
+    stop("Pseudobulk DESeq2 requires finite non-negative integer raw aggregated counts")
+  }
+  if (any(numeric_values < 0)) {
+    stop("Pseudobulk DESeq2 requires finite non-negative integer raw aggregated counts")
+  }
+  if (any(abs(numeric_values - round(numeric_values)) > sqrt(.Machine$double.eps))) {
+    stop("Pseudobulk DESeq2 requires finite non-negative integer raw aggregated counts")
+  }
+  storage.mode(numeric_values) <- "integer"
+  numeric_values
+}
+
 message_plot <- function(path, label) {
   png(path, width = 1200, height = 900, res = 140)
   plot.new()
@@ -70,11 +96,7 @@ dir.create(opt$`output-dir`, recursive = TRUE, showWarnings = FALSE)
 if (!identical(colnames(counts_frame)[-1], metadata_all$pseudobulk_id)) {
   stop("Pseudobulk count columns differ from metadata order")
 }
-count_matrix <- as.matrix(counts_frame[, -1, drop = FALSE])
-if (any(is.na(count_matrix)) || any(count_matrix < 0) || any(count_matrix %% 1 != 0)) {
-  stop("Pseudobulk DESeq2 requires finite non-negative integer raw aggregated counts")
-}
-storage.mode(count_matrix) <- "integer"
+count_matrix <- validate_pseudobulk_counts(counts_frame)
 rownames(count_matrix) <- counts_frame$gene_id
 
 if (!is.na(opt$`analysis-id`) && opt$`analysis-id` != "NA") {

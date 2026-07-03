@@ -525,7 +525,7 @@ def aggregate_pseudobulk(adata, retained, config):
     missing_extra = [field for field in extra if field not in obs]
     if missing_extra:
         raise ValueError(f"Pseudobulk extra_strata columns unavailable: {missing_extra}")
-    grouping = ["dataset_id", "subject_id", "sample_id", "cell_type", *extra]
+    grouping = ["dataset_id", "subject_id", "group", "cell_type", *extra]
     groups = obs.groupby(grouping, sort=True, observed=True).indices
     count_columns = {}
     metadata = []
@@ -545,11 +545,9 @@ def aggregate_pseudobulk(adata, retained, config):
         values_by_field = dict(zip(grouping, key_values))
         dataset_id = values_by_field["dataset_id"]
         subject_id = values_by_field["subject_id"]
-        sample_id = values_by_field["sample_id"]
+        group = values_by_field["group"]
         cell_type = values_by_field["cell_type"]
         subset = obs.iloc[indices]
-        group_values = sorted(set(subset["group"].astype(str)))
-        group = group_values[0] if len(group_values) == 1 else "NA"
         author_values = sorted(set(subset.get("author_label", pd.Series("NA", index=subset.index)).astype(str)))
         author_label = author_values[0] if len(author_values) == 1 else "multiple"
         pseudobulk_id = f"PB{index:05d}"
@@ -569,6 +567,7 @@ def aggregate_pseudobulk(adata, retained, config):
             reasons.append("min_detected_genes")
         eligibility = "eligible" if not reasons else "ineligible"
         sample_ids = sorted(set(subset["sample_id"].astype(str)))
+        sample_id = sample_ids[0] if len(sample_ids) == 1 else "multiple"
         base = {
             field: (
                 next(iter(field_values))

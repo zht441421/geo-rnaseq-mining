@@ -97,6 +97,25 @@ def prepare_pseudobulk(
             "pseudobulk_level": "subject_id",
             "pseudobulk_source": "raw_counts",
             "pseudobulk_count": int(len(metadata)),
+            "eligible_pseudobulk_count": int(
+                (metadata["eligibility"] == "eligible").sum()
+            ),
+            "ineligible_pseudobulk_count": int(
+                (metadata["eligibility"] != "eligible").sum()
+            ),
+            "min_cells_per_pseudobulk": int(
+                config["single_cell"]["pseudobulk"]["min_cells_per_pseudobulk"]
+            ),
+            "min_subjects_per_group": int(
+                config["single_cell"]["pseudobulk"]["min_subjects_per_group"]
+            ),
+            "min_total_counts": int(
+                config["single_cell"]["pseudobulk"]["min_total_counts"]
+            ),
+            "min_detected_genes": int(
+                config["single_cell"]["pseudobulk"]["min_detected_genes"]
+            ),
+            "cell_replication_used": False,
         },
     )
 
