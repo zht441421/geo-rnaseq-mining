@@ -78,6 +78,8 @@ OUTPUT_TABLES = {
         "limitations",
         "dataset_driven",
         "confidence",
+        "is_final_biological_conclusion",
+        "required_action",
     ],
     "dataset_support_matrix.tsv": [
         "canonical_gene_id",
@@ -375,7 +377,13 @@ def evidence_level(total):
 
 
 def confidence(level, limitations):
-    if "ambiguous_one_to_many" in limitations or "validation_failed" in limitations:
+    limiting_flags = {
+        "ambiguous_one_to_many",
+        "bulk_pseudobulk_opposite_direction",
+        "single_gse_support",
+        "validation_failed",
+    }
+    if limiting_flags & set(limitations):
         return "limited"
     return {"high": "high", "moderate": "moderate", "low": "low"}.get(level, "limited")
 
@@ -513,6 +521,8 @@ def integrate_bulk_scrna(
                 "limitations": ";".join(sorted(set(limitations))) if limitations else "none",
                 "dataset_driven": str(dataset_driven).lower(),
                 "confidence": confidence(level, limitations),
+                "is_final_biological_conclusion": "false",
+                "required_action": "human_review_required",
             }
         )
         tables["consensus_genes.tsv"].append(

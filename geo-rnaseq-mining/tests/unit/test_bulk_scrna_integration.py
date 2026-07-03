@@ -166,6 +166,7 @@ class BulkScrnaIntegrationTests(unittest.TestCase):
         self.assertIn("opposite", consistency)
         limitations = tables["candidate_gene_scores.tsv"][0]["limitations"]
         self.assertIn("bulk_pseudobulk_opposite_direction", limitations)
+        self.assertEqual("limited", tables["candidate_gene_scores.tsv"][0]["confidence"])
 
     def test_single_gse_support_is_limited_and_dataset_driven(self):
         bulk = [base_tables()[0][0]]
@@ -173,6 +174,13 @@ class BulkScrnaIntegrationTests(unittest.TestCase):
         score = tables["candidate_gene_scores.tsv"][0]
         self.assertEqual("true", score["dataset_driven"])
         self.assertIn("single_gse_support", score["limitations"])
+        self.assertEqual("limited", score["confidence"])
+
+    def test_candidate_scores_are_not_final_biological_conclusions(self):
+        tables = run_case()
+        score = tables["candidate_gene_scores.tsv"][0]
+        self.assertEqual("false", score["is_final_biological_conclusion"])
+        self.assertEqual("human_review_required", score["required_action"])
 
     def test_ambiguous_dominant_cell_type_is_not_overstated(self):
         avg = [
