@@ -41,6 +41,8 @@ jobs:
             env_file: geo-rnaseq-mining/workflow/envs/r-bulk-analysis.yaml
           - env_name: sra-tools
             env_file: geo-rnaseq-mining/workflow/envs/sra-tools.yaml
+          - env_name: python-single-cell
+            env_file: geo-rnaseq-mining/workflow/envs/python-single-cell.yaml
 
     steps:
       - name: Checkout repository
@@ -147,6 +149,16 @@ jobs:
               vdb-config --version
               pigz --version
               python --version
+              ;;
+            python-single-cell)
+              python --version
+              python -c 'import anndata, numpy, pandas, scanpy, scipy, sklearn; print("python core imports ok")'
+              python -c 'import scrublet, igraph, leidenalg; print("python single-cell imports ok")'
+              python -c 'import doubletdetection; print("doubletdetection import ok")'
+              Rscript --version
+              Rscript -e 'packageVersion("Seurat")'
+              Rscript -e 'packageVersion("SingleCellExperiment")'
+              Rscript -e 'packageVersion("zellkonverter")'
               ;;
             *)
               echo "Unexpected environment: ${{ matrix.env_name }}"
