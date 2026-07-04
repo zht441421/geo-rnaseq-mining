@@ -44,3 +44,23 @@ jobs:
         shell: bash -el {0}
         run: |
           mamba env create --dry-run -f geo-rnaseq-mining/workflow/envs/bulk.yaml
+
+      - name: Dry-run solve base environment
+        shell: bash -el {0}
+        run: |
+          mamba env create --dry-run -f geo-rnaseq-mining/workflow/envs/base.yaml
+
+      - name: Dry-run solve data-entry environment
+        shell: bash -el {0}
+        run: |
+          mamba env create --dry-run -f geo-rnaseq-mining/workflow/envs/data-entry.yaml
+
+      - name: Dry-run solve bulk-fastqc environment
+        shell: bash -el {0}
+        run: |
+          mamba env create --dry-run -f geo-rnaseq-mining/workflow/envs/bulk-fastqc.yaml
+
+      - name: Dry-run solve bulk-salmon environment
+        shell: bash -el {0}
+        run: |
+          mamba env create --dry-run -f geo-rnaseq-mining/workflow/envs/bulk-salmon.yaml
