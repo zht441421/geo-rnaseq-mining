@@ -35,6 +35,10 @@ jobs:
             env_file: geo-rnaseq-mining/workflow/envs/metadata.yaml
           - env_name: bulk-star-featurecounts
             env_file: geo-rnaseq-mining/workflow/envs/bulk-star-featurecounts.yaml
+          - env_name: r-bulk
+            env_file: geo-rnaseq-mining/workflow/envs/r-bulk.yaml
+          - env_name: r-bulk-analysis
+            env_file: geo-rnaseq-mining/workflow/envs/r-bulk-analysis.yaml
 
     steps:
       - name: Checkout repository
@@ -121,6 +125,21 @@ jobs:
               pigz --version
               python --version
               python -c 'import pandas; print("bulk-star-featurecounts imports ok")'
+              ;;
+            r-bulk)
+              Rscript --version
+              Rscript -e 'packageVersion("GEOquery")'
+              Rscript -e 'packageVersion("DESeq2")'
+              Rscript -e 'packageVersion("jsonlite")'
+              ;;
+            r-bulk-analysis)
+              Rscript --version
+              Rscript -e 'packageVersion("DESeq2")'
+              Rscript -e 'packageVersion("tximport")'
+              Rscript -e 'packageVersion("fgsea")'
+              Rscript -e 'packageVersion("sva")'
+              Rscript -e 'packageVersion("survival")'
+              Rscript -e 'packageVersion("data.table")'
               ;;
             *)
               echo "Unexpected environment: ${{ matrix.env_name }}"
