@@ -2,10 +2,45 @@
 
 on:
   workflow_dispatch:
+  push:
+
+permissions:
+  contents: read
 
 jobs:
   env-solve:
+    name: Linux env solve dry-run
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+
     steps:
-      - name: Confirm manual trigger
-        run: echo "Environment Solve workflow is manually triggerable."
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Miniforge with Mamba
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          mamba-version: "*"
+          channels: conda-forge,bioconda
+          channel-priority: strict
+          auto-activate-base: true
+
+      - name: Show Conda configuration
+        shell: bash -el {0}
+        run: |
+          conda config --set channel_priority strict
+          conda info
+          conda config --show channel_priority
+          conda config --show channels
+          mamba --version
+
+      - name: Dry-run solve metadata environment
+        shell: bash -el {0}
+        run: |
+          mamba env create --dry-run -f geo-rnaseq-mining/workflow/envs/metadata.yaml
+
+      - name: Dry-run solve bulk environment
+        shell: bash -el {0}
+        run: |
+          mamba env create --dry-run -f geo-rnaseq-mining/workflow/envs/bulk.yaml
