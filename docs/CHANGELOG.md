@@ -2,6 +2,74 @@
 
 所有日期使用 Asia/Shanghai 时区。按最新记录在前的顺序维护。
 
+## 2026-07-04 — Environment Solve medium-risk env dry-run expansion verification
+
+### 新增与删除文件
+
+- 无。
+
+### 修改文件
+
+- `docs/CURRENT_STATE.md`
+- `docs/CHANGELOG.md`
+- `docs/NEXT_TASK.md`
+- `docs/VALIDATION.md`
+
+### 接口、配置与决策变化
+
+- Root `.github/workflows/env-solve.yml` 已在本阶段扩展第二批中风险 env dry-run。
+- GitHub Actions workflow `Environment Solve` 已成功运行扩展后的 dry-run solve。
+- 本次交接只更新 Markdown 文档；未继续修改 workflow、schema、CI、env yaml、测试或代码文件。
+- 未产生新的用户确认分析决策；`docs/DECISIONS.md` 保持不变。
+- 相关 commits：
+  - `0ab2186` low-risk env expansion
+  - `ec832de` medium-risk env expansion
+
+### 验证变化
+
+- GitHub Actions run `ci(envs): add medium-risk env solve dry runs #7` 成功。
+- Branch：`123`。
+- Commit：`ec832de`。
+- Job：`Linux env solve dry-run`。
+- Total duration：1m 51s；job duration：1m 48s。
+- Artifacts：无。
+- 以下 env 已通过 `mamba env create --dry-run`：
+  - `geo-rnaseq-mining/workflow/envs/metadata.yaml`
+  - `geo-rnaseq-mining/workflow/envs/bulk.yaml`
+  - `geo-rnaseq-mining/workflow/envs/base.yaml`
+  - `geo-rnaseq-mining/workflow/envs/data-entry.yaml`
+  - `geo-rnaseq-mining/workflow/envs/bulk-fastqc.yaml`
+  - `geo-rnaseq-mining/workflow/envs/bulk-salmon.yaml`
+  - `geo-rnaseq-mining/workflow/envs/bulk-star-featurecounts.yaml`
+  - `geo-rnaseq-mining/workflow/envs/r-bulk.yaml`
+  - `geo-rnaseq-mining/workflow/envs/report.yaml`
+  - `geo-rnaseq-mining/workflow/envs/scrna.yaml`
+
+### Warnings 记录
+
+- Node.js 20 deprecation warning for `actions/checkout@v4` and `setup-miniconda@v3` forced onto Node.js 24。
+- `auto-activate-base` deprecated；后续可考虑 `auto-activate`。
+- `defaults` channel may have been added implicitly；后续可考虑显式 channels 或 `conda-remove-defaults: true`。
+
+### 仍未运行
+
+- 剩余 3 个 env yaml 未验证：
+  - `geo-rnaseq-mining/workflow/envs/sra-tools.yaml`
+  - `geo-rnaseq-mining/workflow/envs/r-bulk-analysis.yaml`
+  - `geo-rnaseq-mining/workflow/envs/python-single-cell.yaml`
+- env 实际创建未验证。
+- Snakemake production jobs 未运行。
+- GEO/SRA 下载未验证。
+- 真实生产数据分析未验证。
+
+### 下一阶段边界
+
+- 下一阶段唯一任务是只读规划剩余高风险/特殊 env dry-run 覆盖范围。
+- 剩余候选为 `sra-tools.yaml`、`r-bulk-analysis.yaml`、`python-single-cell.yaml`。
+- 不得直接修改 workflow。
+- 重点判断是否需要拆分独立 job、是否允许失败不阻断主 env solve、是否需要更长 timeout，以及如何确保不运行 SRA 下载或生产任务。
+- 必须等待用户确认后再实施任何 workflow 修改。
+
 ## 2026-07-04 — Environment Solve low-risk env dry-run expansion verification
 
 ### 新增与删除文件
