@@ -22,7 +22,7 @@ jobs:
         with:
           miniforge-version: latest
           mamba-version: "*"
-          channels: conda-forge,bioconda
+          channels: conda-forge,bioconda,defaults
           channel-priority: strict
           auto-activate: true
           activate-environment: base
@@ -100,7 +100,7 @@ jobs:
         with:
           miniforge-version: latest
           mamba-version: "*"
-          channels: conda-forge,bioconda
+          channels: conda-forge,bioconda,defaults
           channel-priority: strict
           auto-activate: true
           activate-environment: base
