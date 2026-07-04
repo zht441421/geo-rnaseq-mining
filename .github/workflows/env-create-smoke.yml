@@ -39,6 +39,8 @@ jobs:
             env_file: geo-rnaseq-mining/workflow/envs/r-bulk.yaml
           - env_name: r-bulk-analysis
             env_file: geo-rnaseq-mining/workflow/envs/r-bulk-analysis.yaml
+          - env_name: sra-tools
+            env_file: geo-rnaseq-mining/workflow/envs/sra-tools.yaml
 
     steps:
       - name: Checkout repository
@@ -140,6 +142,11 @@ jobs:
               Rscript -e 'packageVersion("sva")'
               Rscript -e 'packageVersion("survival")'
               Rscript -e 'packageVersion("data.table")'
+              ;;
+            sra-tools)
+              vdb-config --version
+              pigz --version
+              python --version
               ;;
             *)
               echo "Unexpected environment: ${{ matrix.env_name }}"
