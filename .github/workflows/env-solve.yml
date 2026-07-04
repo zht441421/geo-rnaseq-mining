@@ -1,4 +1,4 @@
-name: Environment Solve
+﻿name: Environment Solve
 
 on:
   workflow_dispatch:
