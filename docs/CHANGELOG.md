@@ -2,6 +2,60 @@
 
 所有日期使用 Asia/Shanghai 时区。按最新记录在前的顺序维护。
 
+## 2026-07-04 — Environment Solve minimal dry-run restore verification
+
+### 新增与删除文件
+
+- 新增 `docs/VALIDATION.md`，记录 GitHub Actions 验证、warnings、边界和未验证内容。
+
+### 修改文件
+
+- `docs/CURRENT_STATE.md`
+- `docs/CHANGELOG.md`
+- `docs/NEXT_TASK.md`
+- `docs/VALIDATION.md`
+
+### 接口、配置与决策变化
+
+- Root `.github/workflows/env-solve.yml` 已在本阶段恢复最小真实 env solve dry-run。
+- GitHub Actions workflow `Environment Solve` 已成功识别并由 `push` 触发。
+- 本次交接只更新 Markdown 文档；未继续修改 workflow、schema、CI、env yaml、测试或代码文件。
+- 未产生新的用户确认分析决策；`docs/DECISIONS.md` 保持不变。
+- 相关 commits：
+  - `77dbea8` trigger recognition
+  - `133e740` minimal dry-run restore
+
+### 验证变化
+
+- GitHub Actions run `ci(envs): restore minimal env solve dry run #3` 成功。
+- Branch：`123`。
+- Commit：`133e740`。
+- Job：`Linux env solve dry-run`。
+- Total duration：55s；job duration：51s。
+- Artifacts：无。
+- `geo-rnaseq-mining/workflow/envs/metadata.yaml` 已通过 `mamba env create --dry-run`。
+- `geo-rnaseq-mining/workflow/envs/bulk.yaml` 已通过 `mamba env create --dry-run`。
+
+### Warnings 记录
+
+- Node.js 20 deprecation warning for `actions/checkout@v4` and `setup-miniconda@v3` forced onto Node.js 24。
+- `auto-activate-base` deprecated；后续可考虑 `auto-activate`。
+- `defaults` channel may have been added implicitly；后续可考虑显式 channels 或 `conda-remove-defaults: true`。
+
+### 仍未运行
+
+- 全部 env yaml 未验证。
+- env 实际创建未验证。
+- Snakemake production jobs 未运行。
+- GEO/SRA 下载未验证。
+- 真实生产数据分析未验证。
+
+### 下一阶段边界
+
+- 下一阶段唯一任务是只读规划是否逐步扩大 Environment Solve env yaml 覆盖范围。
+- 必须先列出 `geo-rnaseq-mining/workflow/envs/*.yaml`，按风险和依赖分组，提出逐步加入 dry-run solve 的计划。
+- 不得直接扩大到全部 env，必须等待用户确认。
+
 ## 2026-07-02 — Snakemake/Git 修复阶段交接复核
 
 ### 新增与删除文件
