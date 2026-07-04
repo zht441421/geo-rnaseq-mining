@@ -1,0 +1,11 @@
+name: Environment Solve
+
+on:
+  workflow_dispatch:
+
+jobs:
+  env-solve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm manual trigger
+        run: echo "Environment Solve workflow is manually triggerable."
