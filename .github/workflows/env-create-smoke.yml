@@ -23,6 +23,10 @@ jobs:
             env_file: geo-rnaseq-mining/workflow/envs/data-entry.yaml
           - env_name: bulk-fastqc
             env_file: geo-rnaseq-mining/workflow/envs/bulk-fastqc.yaml
+          - env_name: bulk-salmon
+            env_file: geo-rnaseq-mining/workflow/envs/bulk-salmon.yaml
+          - env_name: report
+            env_file: geo-rnaseq-mining/workflow/envs/report.yaml
 
     steps:
       - name: Checkout repository
@@ -79,6 +83,14 @@ jobs:
             bulk-fastqc)
               fastqc --version
               multiqc --version
+              ;;
+            bulk-salmon)
+              salmon --version
+              ;;
+            report)
+              Rscript -e 'packageVersion("rmarkdown")'
+              Rscript -e 'packageVersion("knitr")'
+              pandoc --version
               ;;
             *)
               echo "Unexpected environment: ${{ matrix.env_name }}"
