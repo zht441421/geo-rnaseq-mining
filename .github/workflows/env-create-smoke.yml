@@ -31,6 +31,10 @@ jobs:
             env_file: geo-rnaseq-mining/workflow/envs/bulk.yaml
           - env_name: scrna
             env_file: geo-rnaseq-mining/workflow/envs/scrna.yaml
+          - env_name: metadata
+            env_file: geo-rnaseq-mining/workflow/envs/metadata.yaml
+          - env_name: bulk-star-featurecounts
+            env_file: geo-rnaseq-mining/workflow/envs/bulk-star-featurecounts.yaml
 
     steps:
       - name: Checkout repository
@@ -103,6 +107,20 @@ jobs:
             scrna)
               python --version
               python -c 'import anndata, numpy, pandas, scanpy; print("scrna imports ok")'
+              ;;
+            metadata)
+              Rscript --version
+              Rscript -e 'packageVersion("GEOquery")'
+              Rscript -e 'packageVersion("jsonlite")'
+              python --version
+              python -c 'import pandas; print("metadata imports ok")'
+              ;;
+            bulk-star-featurecounts)
+              STAR --version
+              featureCounts -v
+              pigz --version
+              python --version
+              python -c 'import pandas; print("bulk-star-featurecounts imports ok")'
               ;;
             *)
               echo "Unexpected environment: ${{ matrix.env_name }}"
