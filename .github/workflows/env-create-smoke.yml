@@ -74,12 +74,7 @@ jobs:
               ;;
             data-entry)
               python --version
-              python - <<'PY'
-import h5py
-import yaml
-
-print("data-entry imports ok")
-PY
+              python -c 'import h5py, yaml; print("data-entry imports ok")'
               ;;
             bulk-fastqc)
               fastqc --version
