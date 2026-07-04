@@ -27,6 +27,10 @@ jobs:
             env_file: geo-rnaseq-mining/workflow/envs/bulk-salmon.yaml
           - env_name: report
             env_file: geo-rnaseq-mining/workflow/envs/report.yaml
+          - env_name: bulk
+            env_file: geo-rnaseq-mining/workflow/envs/bulk.yaml
+          - env_name: scrna
+            env_file: geo-rnaseq-mining/workflow/envs/scrna.yaml
 
     steps:
       - name: Checkout repository
@@ -91,6 +95,14 @@ jobs:
               Rscript -e 'packageVersion("rmarkdown")'
               Rscript -e 'packageVersion("knitr")'
               pandoc --version
+              ;;
+            bulk)
+              Rscript --version
+              Rscript -e 'packageVersion("DESeq2")'
+              ;;
+            scrna)
+              python --version
+              python -c 'import anndata, numpy, pandas, scanpy; print("scrna imports ok")'
               ;;
             *)
               echo "Unexpected environment: ${{ matrix.env_name }}"
