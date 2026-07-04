@@ -2,6 +2,7 @@ name: Environment Solve
 
 on:
   workflow_dispatch:
+  push: # 添加这一行，让代码提交时自动触发一次
 
 jobs:
   env-solve:
