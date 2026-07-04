@@ -1,0 +1,101 @@
+name: Environment Create Smoke
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  env-create-smoke:
+    name: Linux env create smoke (${{ matrix.env_name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - env_name: base
+            env_file: geo-rnaseq-mining/workflow/envs/base.yaml
+          - env_name: data-entry
+            env_file: geo-rnaseq-mining/workflow/envs/data-entry.yaml
+          - env_name: bulk-fastqc
+            env_file: geo-rnaseq-mining/workflow/envs/bulk-fastqc.yaml
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Miniforge with Mamba
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          mamba-version: "*"
+          channels: conda-forge,bioconda
+          channel-priority: strict
+          auto-activate-base: true
+
+      - name: Show Conda configuration
+        shell: bash -el {0}
+        run: |
+          conda config --set channel_priority strict
+          conda info
+          conda config --show channel_priority
+          conda config --show channels
+          mamba --version
+
+      - name: Check disk before environment creation
+        shell: bash -el {0}
+        run: |
+          df -h
+          du -sh "${CONDA}" || true
+          du -sh "${RUNNER_TEMP}" || true
+
+      - name: Create environment
+        shell: bash -el {0}
+        run: |
+          ENV_PREFIX="${RUNNER_TEMP}/env-create-smoke/${{ matrix.env_name }}"
+          mkdir -p "$(dirname "${ENV_PREFIX}")"
+          mamba env create -p "${ENV_PREFIX}" -f "${{ matrix.env_file }}"
+
+      - name: Smoke test environment
+        shell: bash -el {0}
+        run: |
+          ENV_PREFIX="${RUNNER_TEMP}/env-create-smoke/${{ matrix.env_name }}"
+          source "$(conda info --base)/etc/profile.d/conda.sh"
+          conda activate "${ENV_PREFIX}"
+
+          case "${{ matrix.env_name }}" in
+            base)
+              python --version
+              snakemake --version
+              ;;
+            data-entry)
+              python --version
+              python - <<'PY'
+import h5py
+import yaml
+
+print("data-entry imports ok")
+PY
+              ;;
+            bulk-fastqc)
+              fastqc --version
+              multiqc --version
+              ;;
+            *)
+              echo "Unexpected environment: ${{ matrix.env_name }}"
+              exit 1
+              ;;
+          esac
+
+      - name: Check disk after environment creation
+        shell: bash -el {0}
+        run: |
+          ENV_PREFIX="${RUNNER_TEMP}/env-create-smoke/${{ matrix.env_name }}"
+          df -h
+          du -sh "${ENV_PREFIX}" || true
+          du -sh "${CONDA}" || true
+          du -sh "${RUNNER_TEMP}" || true
