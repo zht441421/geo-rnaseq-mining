@@ -2,6 +2,76 @@
 
 所有日期使用 Asia/Shanghai 时区。本文档记录阶段验证事实、范围边界、warnings 和未验证内容。
 
+## 2026-07-04 — Environment Solve all-env dry-run coverage verification
+
+### GitHub Actions run
+
+| 检查项 | 结果 | 说明 |
+|---|---|---|
+| Workflow 识别 | 通过 | `Environment Solve` |
+| Run | 通过 | `ci(envs): add high-risk env solve dry runs #9` |
+| Trigger | 通过 | `push` |
+| Branch | 通过 | `123` |
+| Commit | 通过 | `2bd80d9` |
+| Total duration | 通过 | 1m 57s |
+| Artifacts | 通过 | 无 |
+| Linux env solve dry-run | 通过 | 1m 53s |
+| Linux high-risk env solve dry-run | 通过 | 1m 16s |
+
+### Env dry-run 结果
+
+| env | 结果 |
+|---|---|
+| `metadata.yaml` | 通过 |
+| `bulk.yaml` | 通过 |
+| `base.yaml` | 通过 |
+| `data-entry.yaml` | 通过 |
+| `bulk-fastqc.yaml` | 通过 |
+| `bulk-salmon.yaml` | 通过 |
+| `bulk-star-featurecounts.yaml` | 通过 |
+| `r-bulk.yaml` | 通过 |
+| `report.yaml` | 通过 |
+| `scrna.yaml` | 通过 |
+| `sra-tools.yaml` | 通过 |
+| `r-bulk-analysis.yaml` | 通过 |
+| `python-single-cell.yaml` | 通过 |
+
+### Commits
+
+- `ec832de` medium-risk env expansion
+- `2bd80d9` high-risk env expansion
+
+### 已验证范围
+
+- GitHub Actions workflow 可由 `push` 触发。
+- GitHub Actions runner 可完成 checkout。
+- Miniforge/Mamba setup 可运行。
+- Root `.github/workflows/env-solve.yml` 覆盖全部 13 个 env yaml 的 `mamba env create --dry-run`。
+- 稳定基线 job 和 high-risk job 均成功。
+
+### Warnings
+
+GitHub Actions run 有 10 个 warnings，但 jobs 成功。本阶段只记录，不修复；后续作为 P2/P3 优化候选。
+
+- Node.js 20 deprecation warning for `actions/checkout@v4` and `setup-miniconda@v3` forced onto Node.js 24。
+- `auto-activate-base` is deprecated；后续可考虑 `auto-activate`。
+- `defaults` channel may have been added implicitly；后续可考虑显式 channels 或 `conda-remove-defaults: true`。
+
+### 未验证内容
+
+- env 实际创建未验证。
+- Snakemake production jobs 未运行。
+- GEO/SRA 下载未验证。
+- 真实生产数据分析未验证。
+
+### 边界说明
+
+- 本阶段只是 dry-run solve。
+- 本阶段不等于实际环境创建成功。
+- 本阶段不等于生产 pipeline 可用。
+- 下一阶段唯一任务是只读规划从 env solve dry-run 进入实际环境创建验证的最小安全路径。
+- 下一阶段重点判断是否先对低风险 env 做 `mamba env create` 实际创建测试，是否拆独立 workflow/job，如何控制缓存、耗时、磁盘空间，以及如何避免 production jobs、GEO/SRA 下载和真实数据分析。
+
 ## 2026-07-04 — Environment Solve medium-risk env dry-run expansion verification
 
 ### GitHub Actions run

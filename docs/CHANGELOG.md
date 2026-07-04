@@ -2,6 +2,75 @@
 
 所有日期使用 Asia/Shanghai 时区。按最新记录在前的顺序维护。
 
+## 2026-07-04 — Environment Solve all-env dry-run coverage verification
+
+### 新增与删除文件
+- 无。
+
+### 修改文件
+
+- `.github/workflows/env-solve.yml`
+- `docs/CURRENT_STATE.md`
+- `docs/CHANGELOG.md`
+- `docs/NEXT_TASK.md`
+- `docs/VALIDATION.md`
+
+### 接口、配置与决策变化
+
+- Root `.github/workflows/env-solve.yml` 已在本阶段扩展到全部 13 个 env yaml dry-run 覆盖。
+- GitHub Actions workflow `Environment Solve` 已成功运行扩展后的 dry-run solve。
+- 本次交接只更新 Markdown 文档；未继续修改 workflow、schema、CI、env yaml、测试或代码文件。
+- 未产生新的用户确认分析决策；`docs/DECISIONS.md` 保持不变。
+- 相关 commits：
+  - `ec832de` medium-risk env expansion
+  - `2bd80d9` high-risk env expansion
+
+### 验证变化
+
+- GitHub Actions run `ci(envs): add high-risk env solve dry runs #9` 成功。
+- Branch：`123`。
+- Commit：`2bd80d9`。
+- Total duration：1m 57s。
+- Artifacts：无。
+- Job `Linux env solve dry-run` 成功，1m 53s。
+- Job `Linux high-risk env solve dry-run` 成功，1m 16s。
+- 以下 env 已通过 `mamba env create --dry-run`：
+  - `geo-rnaseq-mining/workflow/envs/metadata.yaml`
+  - `geo-rnaseq-mining/workflow/envs/bulk.yaml`
+  - `geo-rnaseq-mining/workflow/envs/base.yaml`
+  - `geo-rnaseq-mining/workflow/envs/data-entry.yaml`
+  - `geo-rnaseq-mining/workflow/envs/bulk-fastqc.yaml`
+  - `geo-rnaseq-mining/workflow/envs/bulk-salmon.yaml`
+  - `geo-rnaseq-mining/workflow/envs/bulk-star-featurecounts.yaml`
+  - `geo-rnaseq-mining/workflow/envs/r-bulk.yaml`
+  - `geo-rnaseq-mining/workflow/envs/report.yaml`
+  - `geo-rnaseq-mining/workflow/envs/scrna.yaml`
+  - `geo-rnaseq-mining/workflow/envs/sra-tools.yaml`
+  - `geo-rnaseq-mining/workflow/envs/r-bulk-analysis.yaml`
+  - `geo-rnaseq-mining/workflow/envs/python-single-cell.yaml`
+
+### Warnings 记录
+
+GitHub Actions run 有 10 个 warnings，但 jobs 成功。本阶段只记录，不修复；后续作为 P2/P3 优化候选。
+
+- Node.js 20 deprecation warning for `actions/checkout@v4` and `setup-miniconda@v3` forced onto Node.js 24。
+- `auto-activate-base` deprecated；后续可考虑 `auto-activate`。
+- `defaults` channel implicitly added；后续可考虑显式 channels 或 `conda-remove-defaults: true`。
+
+### 仍未运行
+
+- env 实际创建未验证。
+- Snakemake production jobs 未运行。
+- GEO/SRA 下载未验证。
+- 真实生产数据分析未验证。
+
+### 下一阶段边界
+
+- 下一阶段唯一任务是只读规划从 env solve dry-run 进入实际环境创建验证的最小安全路径。
+- 重点判断是否先对低风险 env 做 `mamba env create` 实际创建测试，是否拆独立 workflow/job，如何控制缓存、耗时、磁盘空间，以及如何避免 production jobs、GEO/SRA 下载和真实数据分析。
+- 不得直接修改 workflow、env yaml、schema、CI、测试或代码。
+- 必须等待用户确认后再实施任何实际环境创建验证。
+
 ## 2026-07-04 — Environment Solve medium-risk env dry-run expansion verification
 
 ### 新增与删除文件
