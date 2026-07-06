@@ -272,7 +272,7 @@ Allowed values for the Coze contract:
 - `markdown`
 - `html`
 
-Current Phase 1 mock implementation supports `json`, `html`, and `zip`. The next implementation alignment should either add `markdown` to the mock enum or remove `zip` from the mock enum before Coze integration hardening.
+Current Phase 1 mock implementation supports `json`, `markdown`, and `html`. The mock only echoes the requested `output_format`; it does not generate a real Markdown report.
 
 Rejected examples:
 

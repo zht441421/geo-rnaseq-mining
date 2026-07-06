@@ -36,6 +36,21 @@ class ApiMockTests(unittest.TestCase):
         with self.assertRaises(SchemaValidationError):
             service.submit_job(payload)
 
+    def test_submit_job_accepts_markdown_output_format(self):
+        service = MockJobService()
+        payload = dict(VALID_PAYLOAD, output_format="markdown")
+
+        response = service.submit_job(payload)
+
+        self.assertEqual("markdown", response["request"]["output_format"])
+
+    def test_submit_job_rejects_removed_zip_output_format(self):
+        service = MockJobService()
+        payload = dict(VALID_PAYLOAD, output_format="zip")
+
+        with self.assertRaises(SchemaValidationError):
+            service.submit_job(payload)
+
     def test_submit_job_rejects_unknown_path_or_command_fields(self):
         service = MockJobService()
 

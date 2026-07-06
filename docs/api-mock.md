@@ -60,7 +60,7 @@ Phase 1 暂不要求启动真实 HTTP 服务。`MockJobService` 提供与目标 
 - `accession`：普通 accession 字符串，不接受路径符号或路径穿越。
 - `analysis_type`：白名单枚举，只允许 `bulk` 或 `scrna`。
 - `species`：普通物种字符串，不接受路径符号。
-- `output_format`：白名单枚举，只允许 `json`、`html` 或 `zip`。
+- `output_format`：白名单枚举，只允许 `json`、`markdown` 或 `html`。
 - `requested_by`：普通用户标识字符串。
 - `notes`：可选说明文本，不参与执行。
 

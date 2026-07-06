@@ -116,6 +116,22 @@ class ApiHttpServerTests(unittest.TestCase):
         self.assertEqual(400, status)
         self.assertEqual("INVALID_ANALYSIS_TYPE", response["error"]["code"])
 
+    def test_markdown_output_format_is_accepted(self):
+        payload = dict(VALID_PAYLOAD, output_format="markdown")
+
+        status, response = self.request("POST", "/jobs", payload)
+
+        self.assertEqual(201, status)
+        self.assertEqual("markdown", response["request"]["output_format"])
+
+    def test_zip_output_format_is_rejected(self):
+        payload = dict(VALID_PAYLOAD, output_format="zip")
+
+        status, response = self.request("POST", "/jobs", payload)
+
+        self.assertEqual(400, status)
+        self.assertEqual("INVALID_OUTPUT_FORMAT", response["error"]["code"])
+
     def test_job_not_found_returns_404(self):
         status, payload = self.request("GET", "/jobs/missing-job")
 

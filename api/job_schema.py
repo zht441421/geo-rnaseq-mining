@@ -23,8 +23,8 @@ class AnalysisType(str, Enum):
 
 class OutputFormat(str, Enum):
     JSON = "json"
+    MARKDOWN = "markdown"
     HTML = "html"
-    ZIP = "zip"
 
 
 _ACCESSION_RE = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")

@@ -73,6 +73,12 @@ Accepts the existing mock schema:
 }
 ```
 
+Allowed `output_format` values:
+
+- `json`
+- `markdown`
+- `html`
+
 Success status: `201`.
 
 ### GET /jobs/{job_id}
