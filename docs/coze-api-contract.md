@@ -204,7 +204,13 @@ POST /jobs/mock-job-000001/cancel
   "error": {
     "code": "INVALID_ANALYSIS_TYPE",
     "message": "analysis_type must be one of: bulk, scrna",
-    "retryable": false
+    "retryable": false,
+    "details": {
+      "allowed_values": ["bulk", "scrna"]
+    },
+    "field_errors": {
+      "analysis_type": ["must be one of: bulk, scrna"]
+    }
   }
 }
 ```
@@ -318,7 +324,31 @@ Coze should stop polling once a terminal status is reached.
 | `JOB_NOT_FOUND` | Requested `job_id` does not exist | no |
 | `JOB_NOT_READY` | Result requested before job completion | yes |
 | `JOB_NOT_CANCELLABLE` | Cancel requested for terminal or non-cancellable status | no |
+| `UNSUPPORTED_MEDIA_TYPE` | JSON body endpoint received a missing or non-JSON `Content-Type` | no |
 | `INTERNAL_ERROR` | Unexpected backend error | maybe |
+
+Schema-style request errors should include field-level information when a
+specific field caused the error:
+
+```json
+{
+  "error": {
+    "code": "INVALID_OUTPUT_FORMAT",
+    "message": "output_format must be one of: json, markdown, html",
+    "retryable": false,
+    "details": {
+      "allowed_values": ["json", "markdown", "html"]
+    },
+    "field_errors": {
+      "output_format": ["must be one of: json, markdown, html"]
+    }
+  }
+}
+```
+
+Coze should treat `field_errors` as the preferred source for telling the user
+which input needs correction. `details` is for structured metadata such as
+allowed values, missing fields, unknown fields, paths, or job IDs.
 
 ## 8. Coze Calling Recommendations
 

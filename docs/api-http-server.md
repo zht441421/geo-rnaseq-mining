@@ -120,10 +120,29 @@ Errors use this shape:
 }
 ```
 
+Schema errors include field-level details:
+
+```json
+{
+  "error": {
+    "code": "INVALID_OUTPUT_FORMAT",
+    "message": "output_format must be one of: json, markdown, html",
+    "retryable": false,
+    "details": {
+      "allowed_values": ["json", "markdown", "html"]
+    },
+    "field_errors": {
+      "output_format": ["must be one of: json, markdown, html"]
+    }
+  }
+}
+```
+
 Implemented error cases:
 
 - `NOT_FOUND`
 - `INVALID_JSON`
+- `UNSUPPORTED_MEDIA_TYPE`
 - `REQUEST_TOO_LARGE`
 - `UNKNOWN_FIELD`
 - `INVALID_ACCESSION`
@@ -133,6 +152,9 @@ Implemented error cases:
 - `JOB_NOT_FOUND`
 - `JOB_NOT_READY`
 - `JOB_NOT_CANCELLABLE`
+
+`POST /jobs` requires `Content-Type: application/json`. Missing or non-JSON
+content types return `415` with `UNSUPPORTED_MEDIA_TYPE`.
 
 ## Safety Boundaries
 

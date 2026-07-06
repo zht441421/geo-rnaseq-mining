@@ -15,6 +15,18 @@ from typing import Any, Mapping
 class SchemaValidationError(ValueError):
     """Raised when a mock API request does not match the accepted schema."""
 
+    def __init__(
+        self,
+        message: str,
+        code: str = "INVALID_REQUEST",
+        field_errors: dict[str, list[str]] | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.field_errors = field_errors or {}
+        self.details = details or {}
+
 
 class AnalysisType(str, Enum):
     BULK = "bulk"
@@ -45,7 +57,10 @@ class JobSubmitRequest:
     @classmethod
     def from_mapping(cls, payload: Mapping[str, Any]) -> "JobSubmitRequest":
         if not isinstance(payload, Mapping):
-            raise SchemaValidationError("submit job payload must be an object")
+            raise SchemaValidationError(
+                "submit job payload must be an object",
+                details={"expected": "object"},
+            )
 
         required = {
             "accession",
@@ -60,13 +75,22 @@ class JobSubmitRequest:
         unknown = sorted(set(payload) - allowed)
         if unknown:
             raise SchemaValidationError(
-                "unsupported field(s): " + ", ".join(unknown)
+                "unsupported field(s): " + ", ".join(unknown),
+                code="UNKNOWN_FIELD",
+                field_errors={
+                    field_name: ["unsupported field"] for field_name in unknown
+                },
+                details={"fields": unknown},
             )
 
         missing = sorted(required - set(payload))
         if missing:
             raise SchemaValidationError(
-                "missing required field(s): " + ", ".join(missing)
+                "missing required field(s): " + ", ".join(missing),
+                field_errors={
+                    field_name: ["missing required field"] for field_name in missing
+                },
+                details={"fields": missing},
             )
 
         accession = _validate_plain_string(
@@ -78,20 +102,62 @@ class JobSubmitRequest:
         )
         notes = _validate_notes(payload.get("notes", ""))
 
-        try:
-            analysis_type = AnalysisType(payload["analysis_type"])
-        except ValueError as exc:
-            allowed_values = ", ".join(item.value for item in AnalysisType)
+        analysis_value = payload["analysis_type"]
+        allowed_analysis_types = [item.value for item in AnalysisType]
+        if not isinstance(analysis_value, str) or not analysis_value:
+            allowed_values = ", ".join(allowed_analysis_types)
             raise SchemaValidationError(
-                f"analysis_type must be one of: {allowed_values}"
+                f"analysis_type must be one of: {allowed_values}",
+                code="INVALID_ANALYSIS_TYPE",
+                field_errors={
+                    "analysis_type": [
+                        "must be one of: " + ", ".join(allowed_analysis_types)
+                    ]
+                },
+                details={"allowed_values": allowed_analysis_types},
+            )
+        try:
+            analysis_type = AnalysisType(analysis_value)
+        except ValueError as exc:
+            allowed_values = ", ".join(allowed_analysis_types)
+            raise SchemaValidationError(
+                f"analysis_type must be one of: {allowed_values}",
+                code="INVALID_ANALYSIS_TYPE",
+                field_errors={
+                    "analysis_type": [
+                        "must be one of: " + ", ".join(allowed_analysis_types)
+                    ]
+                },
+                details={"allowed_values": allowed_analysis_types},
             ) from exc
 
-        try:
-            output_format = OutputFormat(payload["output_format"])
-        except ValueError as exc:
-            allowed_values = ", ".join(item.value for item in OutputFormat)
+        output_value = payload["output_format"]
+        allowed_output_formats = [item.value for item in OutputFormat]
+        if not isinstance(output_value, str) or not output_value:
+            allowed_values = ", ".join(allowed_output_formats)
             raise SchemaValidationError(
-                f"output_format must be one of: {allowed_values}"
+                f"output_format must be one of: {allowed_values}",
+                code="INVALID_OUTPUT_FORMAT",
+                field_errors={
+                    "output_format": [
+                        "must be one of: " + ", ".join(allowed_output_formats)
+                    ]
+                },
+                details={"allowed_values": allowed_output_formats},
+            )
+        try:
+            output_format = OutputFormat(output_value)
+        except ValueError as exc:
+            allowed_values = ", ".join(allowed_output_formats)
+            raise SchemaValidationError(
+                f"output_format must be one of: {allowed_values}",
+                code="INVALID_OUTPUT_FORMAT",
+                field_errors={
+                    "output_format": [
+                        "must be one of: " + ", ".join(allowed_output_formats)
+                    ]
+                },
+                details={"allowed_values": allowed_output_formats},
             ) from exc
 
         return cls(
@@ -117,16 +183,37 @@ class JobSubmitRequest:
 def _validate_plain_string(
     field_name: str, value: Any, pattern: re.Pattern[str]
 ) -> str:
+    code = "INVALID_ACCESSION" if field_name == "accession" else "INVALID_REQUEST"
     if not isinstance(value, str):
-        raise SchemaValidationError(f"{field_name} must be a string")
+        raise SchemaValidationError(
+            f"{field_name} must be a string",
+            code=code,
+            field_errors={field_name: ["must be a string"]},
+        )
     if not value:
-        raise SchemaValidationError(f"{field_name} must not be empty")
+        raise SchemaValidationError(
+            f"{field_name} must not be empty",
+            code=code,
+            field_errors={field_name: ["must not be empty"]},
+        )
     if any(marker in value for marker in _DISALLOWED_PATH_MARKERS):
-        raise SchemaValidationError(f"{field_name} must not contain path markers")
+        raise SchemaValidationError(
+            f"{field_name} must not contain path markers",
+            code=code,
+            field_errors={field_name: ["must not contain path markers"]},
+        )
     if ".." in value:
-        raise SchemaValidationError(f"{field_name} must not contain path traversal")
+        raise SchemaValidationError(
+            f"{field_name} must not contain path traversal",
+            code=code,
+            field_errors={field_name: ["must not contain path traversal"]},
+        )
     if not pattern.fullmatch(value):
-        raise SchemaValidationError(f"{field_name} contains unsupported characters")
+        raise SchemaValidationError(
+            f"{field_name} contains unsupported characters",
+            code=code,
+            field_errors={field_name: ["contains unsupported characters"]},
+        )
     return value
 
 
@@ -134,9 +221,18 @@ def _validate_notes(value: Any) -> str:
     if value is None:
         return ""
     if not isinstance(value, str):
-        raise SchemaValidationError("notes must be a string")
+        raise SchemaValidationError(
+            "notes must be a string",
+            field_errors={"notes": ["must be a string"]},
+        )
     if len(value) > 1000:
-        raise SchemaValidationError("notes must be at most 1000 characters")
+        raise SchemaValidationError(
+            "notes must be at most 1000 characters",
+            field_errors={"notes": ["must be at most 1000 characters"]},
+        )
     if "\x00" in value:
-        raise SchemaValidationError("notes must not contain null bytes")
+        raise SchemaValidationError(
+            "notes must not contain null bytes",
+            field_errors={"notes": ["must not contain null bytes"]},
+        )
     return value

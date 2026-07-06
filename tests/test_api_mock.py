@@ -19,6 +19,17 @@ VALID_PAYLOAD = {
 
 
 class ApiMockTests(unittest.TestCase):
+    def assert_schema_field_error(self, payload, field_name, code=None):
+        service = MockJobService()
+        with self.assertRaises(SchemaValidationError) as context:
+            service.submit_job(payload)
+
+        error = context.exception
+        self.assertIn(field_name, error.field_errors)
+        if code is not None:
+            self.assertEqual(code, error.code)
+        return error
+
     def test_submit_job_creates_queued_mock_job(self):
         service = MockJobService()
 
@@ -45,11 +56,63 @@ class ApiMockTests(unittest.TestCase):
         self.assertEqual("markdown", response["request"]["output_format"])
 
     def test_submit_job_rejects_removed_zip_output_format(self):
-        service = MockJobService()
         payload = dict(VALID_PAYLOAD, output_format="zip")
 
-        with self.assertRaises(SchemaValidationError):
-            service.submit_job(payload)
+        self.assert_schema_field_error(
+            payload, "output_format", "INVALID_OUTPUT_FORMAT"
+        )
+
+    def test_submit_job_rejects_invalid_output_formats(self):
+        for output_format in ("pdf", "txt", "MARKDOWN", ""):
+            with self.subTest(output_format=output_format):
+                payload = dict(VALID_PAYLOAD, output_format=output_format)
+                error = self.assert_schema_field_error(
+                    payload, "output_format", "INVALID_OUTPUT_FORMAT"
+                )
+                self.assertEqual(
+                    {"allowed_values": ["json", "markdown", "html"]},
+                    error.details,
+                )
+
+    def test_submit_job_requires_output_format(self):
+        payload = dict(VALID_PAYLOAD)
+        del payload["output_format"]
+
+        error = self.assert_schema_field_error(payload, "output_format")
+
+        self.assertEqual({"fields": ["output_format"]}, error.details)
+
+    def test_submit_job_rejects_missing_required_fields(self):
+        for field_name in ("accession", "analysis_type", "requested_by"):
+            with self.subTest(field=field_name):
+                payload = dict(VALID_PAYLOAD)
+                del payload[field_name]
+                error = self.assert_schema_field_error(payload, field_name)
+                self.assertEqual({"fields": [field_name]}, error.details)
+
+    def test_submit_job_rejects_empty_required_fields(self):
+        expected_codes = {
+            "accession": "INVALID_ACCESSION",
+            "analysis_type": "INVALID_ANALYSIS_TYPE",
+            "output_format": "INVALID_OUTPUT_FORMAT",
+            "requested_by": "INVALID_REQUEST",
+        }
+        for field_name, code in expected_codes.items():
+            with self.subTest(field=field_name):
+                payload = dict(VALID_PAYLOAD, **{field_name: ""})
+                self.assert_schema_field_error(payload, field_name, code)
+
+    def test_submit_job_rejects_wrong_type_required_fields(self):
+        cases = {
+            "accession": (["GSE123456"], "INVALID_ACCESSION"),
+            "analysis_type": (["bulk"], "INVALID_ANALYSIS_TYPE"),
+            "output_format": (["html"], "INVALID_OUTPUT_FORMAT"),
+            "requested_by": (None, "INVALID_REQUEST"),
+        }
+        for field_name, (value, code) in cases.items():
+            with self.subTest(field=field_name):
+                payload = dict(VALID_PAYLOAD, **{field_name: value})
+                self.assert_schema_field_error(payload, field_name, code)
 
     def test_submit_job_rejects_unknown_path_or_command_fields(self):
         service = MockJobService()

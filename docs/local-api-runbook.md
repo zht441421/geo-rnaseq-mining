@@ -361,6 +361,9 @@ Example:
 {
   "error": {
     "code": "JOB_NOT_CANCELLABLE",
+    "details": {
+      "reason": "cannot cancel job in completed status"
+    },
     "message": "cannot cancel job in completed status",
     "retryable": false
   }
@@ -385,13 +388,38 @@ Expected HTTP status: `400`
 {
   "error": {
     "code": "INVALID_JSON",
+    "details": {
+      "body": "invalid_json"
+    },
     "message": "Request body must be valid JSON.",
     "retryable": false
   }
 }
 ```
 
-### 9.2 Invalid analysis_type
+### 9.2 Missing Or Wrong Content-Type
+
+```powershell
+curl.exe -s -X POST http://127.0.0.1:8000/jobs `
+  --data "{\"accession\":\"GSE123456\",\"analysis_type\":\"bulk\",\"species\":\"Homo sapiens\",\"output_format\":\"html\",\"requested_by\":\"coze-user@example.com\"}"
+```
+
+Expected HTTP status: `415`
+
+```json
+{
+  "error": {
+    "code": "UNSUPPORTED_MEDIA_TYPE",
+    "details": {
+      "content_type": null
+    },
+    "message": "Content-Type must be application/json.",
+    "retryable": false
+  }
+}
+```
+
+### 9.3 Invalid analysis_type
 
 ```powershell
 curl.exe -s -X POST http://127.0.0.1:8000/jobs `
@@ -405,13 +433,19 @@ Expected HTTP status: `400`
 {
   "error": {
     "code": "INVALID_ANALYSIS_TYPE",
+    "details": {
+      "allowed_values": ["bulk", "scrna"]
+    },
+    "field_errors": {
+      "analysis_type": ["must be one of: bulk, scrna"]
+    },
     "message": "analysis_type must be one of: bulk, scrna",
     "retryable": false
   }
 }
 ```
 
-### 9.3 Invalid output_format
+### 9.4 Invalid output_format
 
 ```powershell
 curl.exe -s -X POST http://127.0.0.1:8000/jobs `
@@ -425,6 +459,12 @@ Expected HTTP status with current implementation: `400`
 {
   "error": {
     "code": "INVALID_OUTPUT_FORMAT",
+    "details": {
+      "allowed_values": ["json", "markdown", "html"]
+    },
+    "field_errors": {
+      "output_format": ["must be one of: json, markdown, html"]
+    },
     "message": "output_format must be one of: json, markdown, html",
     "retryable": false
   }
@@ -436,8 +476,35 @@ Compatibility note:
 - Coze contract target whitelist: `json`, `markdown`, `html`.
 - Current mock implementation whitelist: `json`, `markdown`, `html`.
 - `markdown` is accepted as a mock output format, but no real Markdown report is generated in Phase 1.
+- `zip`, `pdf`, `txt`, `MARKDOWN`, and empty string are invalid.
 
-### 9.4 Unknown Field
+### 9.5 Missing Required Field
+
+```powershell
+curl.exe -s -X POST http://127.0.0.1:8000/jobs `
+  -H "Content-Type: application/json" `
+  --data "{\"accession\":\"GSE123456\",\"analysis_type\":\"bulk\",\"species\":\"Homo sapiens\",\"requested_by\":\"coze-user@example.com\"}"
+```
+
+Expected HTTP status: `400`
+
+```json
+{
+  "error": {
+    "code": "INVALID_REQUEST",
+    "details": {
+      "fields": ["output_format"]
+    },
+    "field_errors": {
+      "output_format": ["missing required field"]
+    },
+    "message": "missing required field(s): output_format",
+    "retryable": false
+  }
+}
+```
+
+### 9.6 Unknown Field
 
 ```powershell
 curl.exe -s -X POST http://127.0.0.1:8000/jobs `
@@ -451,13 +518,19 @@ Expected HTTP status: `400`
 {
   "error": {
     "code": "UNKNOWN_FIELD",
+    "details": {
+      "fields": ["command"]
+    },
+    "field_errors": {
+      "command": ["unsupported field"]
+    },
     "message": "unsupported field(s): command",
     "retryable": false
   }
 }
 ```
 
-### 9.5 Job Not Found
+### 9.7 Job Not Found
 
 ```powershell
 curl.exe -s http://127.0.0.1:8000/jobs/missing-job
@@ -478,7 +551,7 @@ Expected HTTP status: `404`
 }
 ```
 
-### 9.6 Result Not Ready
+### 9.8 Result Not Ready
 
 ```powershell
 curl.exe -s http://127.0.0.1:8000/jobs/mock-job-000001/result
@@ -500,7 +573,7 @@ Expected HTTP status: `409`
 }
 ```
 
-### 9.7 Unknown Path
+### 9.9 Unknown Path
 
 ```powershell
 curl.exe -s http://127.0.0.1:8000/not-a-real-endpoint
@@ -512,6 +585,9 @@ Expected HTTP status: `404`
 {
   "error": {
     "code": "NOT_FOUND",
+    "details": {
+      "path": "/not-a-real-endpoint"
+    },
     "message": "Unknown endpoint.",
     "retryable": false
   }
@@ -606,8 +682,10 @@ Recommended manual flow:
 8. Check error responses:
 
    - invalid JSON
+   - missing or wrong `Content-Type`
    - invalid `analysis_type`
    - invalid `output_format`
+   - missing required fields
    - unknown field
    - missing job
    - unknown path

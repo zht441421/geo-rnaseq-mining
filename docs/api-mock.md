@@ -66,6 +66,52 @@ Phase 1 暂不要求启动真实 HTTP 服务。`MockJobService` 提供与目标 
 
 不接受未知字段。因此诸如 `command`、`shell`、`input_path`、`workdir`、`snakefile` 等字段都会被拒绝。
 
+## Negative Request Contract
+
+Schema validation errors are stable enough for Coze-facing contract tests. The
+in-memory mock raises `SchemaValidationError` with:
+
+- `code`
+- `message`
+- `details`
+- `field_errors`
+
+Examples:
+
+```json
+{
+  "code": "INVALID_OUTPUT_FORMAT",
+  "message": "output_format must be one of: json, markdown, html",
+  "details": {
+    "allowed_values": ["json", "markdown", "html"]
+  },
+  "field_errors": {
+    "output_format": ["must be one of: json, markdown, html"]
+  }
+}
+```
+
+Required fields are strict. Missing `accession`, `analysis_type`,
+`output_format`, `species`, or `requested_by` is rejected and identifies the
+missing field in `field_errors`.
+
+Invalid `output_format` examples:
+
+- `zip`
+- `pdf`
+- `txt`
+- `MARKDOWN`
+- empty string
+
+Legal values remain:
+
+- `json`
+- `markdown`
+- `html`
+
+`markdown` and `html` are mock format values only. Phase 1 does not generate
+real Markdown or HTML reports.
+
 ## Job 状态机
 
 状态集合：

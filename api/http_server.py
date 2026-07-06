@@ -40,7 +40,12 @@ def make_handler(service: MockJobService | None = None) -> type[BaseHTTPRequestH
                 self._handle_result(parts[1])
                 return
 
-            self._send_error(404, "NOT_FOUND", "Unknown endpoint.")
+            self._send_error(
+                404,
+                "NOT_FOUND",
+                "Unknown endpoint.",
+                details={"path": self.path},
+            )
 
         def do_POST(self) -> None:
             parts = _path_parts(self.path)
@@ -58,7 +63,12 @@ def make_handler(service: MockJobService | None = None) -> type[BaseHTTPRequestH
                 self._handle_service_call(lambda: job_service.cancel_job(parts[1]))
                 return
 
-            self._send_error(404, "NOT_FOUND", "Unknown endpoint.")
+            self._send_error(
+                404,
+                "NOT_FOUND",
+                "Unknown endpoint.",
+                details={"path": self.path},
+            )
 
         def log_message(self, format: str, *args: Any) -> None:
             return
@@ -103,48 +113,84 @@ def make_handler(service: MockJobService | None = None) -> type[BaseHTTPRequestH
                     {"job_id": job_id},
                 )
             except JobStateError as exc:
-                self._send_error(409, "JOB_NOT_CANCELLABLE", str(exc))
+                self._send_error(
+                    409,
+                    "JOB_NOT_CANCELLABLE",
+                    str(exc),
+                    details={"reason": str(exc)},
+                )
             except ValueError as exc:
-                self._send_error(400, "INVALID_REQUEST", str(exc))
+                self._send_error(
+                    400,
+                    "INVALID_REQUEST",
+                    str(exc),
+                    details={"reason": str(exc)},
+                )
 
         def _read_json_body(self) -> dict[str, Any] | None:
+            content_type = self.headers.get("Content-Type", "")
+            if not content_type.lower().startswith("application/json"):
+                self._send_error(
+                    415,
+                    "UNSUPPORTED_MEDIA_TYPE",
+                    "Content-Type must be application/json.",
+                    details={"content_type": content_type or None},
+                )
+                return None
+
             length_header = self.headers.get("Content-Length", "0")
             try:
                 length = int(length_header)
             except ValueError:
-                self._send_error(400, "INVALID_JSON", "Invalid Content-Length.")
+                self._send_error(
+                    400,
+                    "INVALID_JSON",
+                    "Invalid Content-Length.",
+                    details={"header": "Content-Length"},
+                )
                 return None
 
             if length > MAX_REQUEST_BYTES:
-                self._send_error(413, "REQUEST_TOO_LARGE", "Request body is too large.")
+                self._send_error(
+                    413,
+                    "REQUEST_TOO_LARGE",
+                    "Request body is too large.",
+                    details={"max_request_bytes": MAX_REQUEST_BYTES},
+                )
                 return None
 
             raw_body = self.rfile.read(length)
             try:
                 payload = json.loads(raw_body.decode("utf-8"))
             except (UnicodeDecodeError, json.JSONDecodeError):
-                self._send_error(400, "INVALID_JSON", "Request body must be valid JSON.")
+                self._send_error(
+                    400,
+                    "INVALID_JSON",
+                    "Request body must be valid JSON.",
+                    details={"body": "invalid_json"},
+                )
                 return None
 
             if not isinstance(payload, dict):
-                self._send_error(400, "INVALID_JSON", "Request JSON must be an object.")
+                self._send_error(
+                    400,
+                    "INVALID_JSON",
+                    "Request JSON must be an object.",
+                    details={"expected": "object"},
+                )
                 return None
 
             return payload
 
         def _send_schema_error(self, exc: SchemaValidationError) -> None:
             message = str(exc)
-            if message.startswith("unsupported field"):
-                code = "UNKNOWN_FIELD"
-            elif message.startswith("analysis_type"):
-                code = "INVALID_ANALYSIS_TYPE"
-            elif message.startswith("output_format"):
-                code = "INVALID_OUTPUT_FORMAT"
-            elif message.startswith("accession"):
-                code = "INVALID_ACCESSION"
-            else:
-                code = "INVALID_REQUEST"
-            self._send_error(400, code, message)
+            self._send_error(
+                400,
+                exc.code,
+                message,
+                details=exc.details,
+                field_errors=exc.field_errors,
+            )
 
         def _send_error(
             self,
@@ -152,6 +198,7 @@ def make_handler(service: MockJobService | None = None) -> type[BaseHTTPRequestH
             code: str,
             message: str,
             details: dict[str, Any] | None = None,
+            field_errors: dict[str, list[str]] | None = None,
             retryable: bool = False,
         ) -> None:
             error: dict[str, Any] = {
@@ -159,8 +206,10 @@ def make_handler(service: MockJobService | None = None) -> type[BaseHTTPRequestH
                 "message": message,
                 "retryable": retryable,
             }
-            if details:
+            if details is not None:
                 error["details"] = details
+            if field_errors:
+                error["field_errors"] = field_errors
             self._send_json(status, {"error": error})
 
         def _send_json(self, status: int, payload: dict[str, Any]) -> None:

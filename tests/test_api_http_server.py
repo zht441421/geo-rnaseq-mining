@@ -44,6 +44,14 @@ class ApiHttpServerTests(unittest.TestCase):
         connection.close()
         return response.status, json.loads(raw)
 
+    def raw_request(self, method, path, body=None, headers=None):
+        connection = http.client.HTTPConnection(self.host, self.port, timeout=5)
+        connection.request(method, path, body=body, headers=headers or {})
+        response = connection.getresponse()
+        raw = response.read().decode("utf-8")
+        connection.close()
+        return response.status, json.loads(raw)
+
     def test_health_endpoint(self):
         status, payload = self.request("GET", "/health")
 
@@ -107,6 +115,30 @@ class ApiHttpServerTests(unittest.TestCase):
 
         self.assertEqual(400, response.status)
         self.assertEqual("INVALID_JSON", payload["error"]["code"])
+        self.assertIn("details", payload["error"])
+
+    def test_missing_content_type_returns_415(self):
+        status, payload = self.raw_request(
+            "POST",
+            "/jobs",
+            body=json.dumps(VALID_PAYLOAD),
+        )
+
+        self.assertEqual(415, status)
+        self.assertEqual("UNSUPPORTED_MEDIA_TYPE", payload["error"]["code"])
+        self.assertIn("details", payload["error"])
+
+    def test_wrong_content_type_returns_415(self):
+        status, payload = self.raw_request(
+            "POST",
+            "/jobs",
+            body=json.dumps(VALID_PAYLOAD),
+            headers={"Content-Type": "text/plain"},
+        )
+
+        self.assertEqual(415, status)
+        self.assertEqual("UNSUPPORTED_MEDIA_TYPE", payload["error"]["code"])
+        self.assertEqual("text/plain", payload["error"]["details"]["content_type"])
 
     def test_schema_error_returns_400(self):
         payload = dict(VALID_PAYLOAD, analysis_type="shell")
@@ -115,6 +147,7 @@ class ApiHttpServerTests(unittest.TestCase):
 
         self.assertEqual(400, status)
         self.assertEqual("INVALID_ANALYSIS_TYPE", response["error"]["code"])
+        self.assertIn("analysis_type", response["error"]["field_errors"])
 
     def test_markdown_output_format_is_accepted(self):
         payload = dict(VALID_PAYLOAD, output_format="markdown")
@@ -125,18 +158,54 @@ class ApiHttpServerTests(unittest.TestCase):
         self.assertEqual("markdown", response["request"]["output_format"])
 
     def test_zip_output_format_is_rejected(self):
-        payload = dict(VALID_PAYLOAD, output_format="zip")
+        self.assert_invalid_output_format("zip")
+
+    def test_invalid_output_formats_are_rejected(self):
+        for output_format in ("pdf", "txt", "MARKDOWN", ""):
+            with self.subTest(output_format=output_format):
+                self.assert_invalid_output_format(output_format)
+
+    def assert_invalid_output_format(self, output_format):
+        payload = dict(VALID_PAYLOAD, output_format=output_format)
 
         status, response = self.request("POST", "/jobs", payload)
 
         self.assertEqual(400, status)
         self.assertEqual("INVALID_OUTPUT_FORMAT", response["error"]["code"])
+        self.assertIn("output_format", response["error"]["field_errors"])
+        self.assertEqual(
+            ["json", "markdown", "html"],
+            response["error"]["details"]["allowed_values"],
+        )
+
+    def test_missing_required_fields_return_field_errors(self):
+        for field_name in ("accession", "analysis_type", "output_format"):
+            with self.subTest(field=field_name):
+                payload = dict(VALID_PAYLOAD)
+                del payload[field_name]
+
+                status, response = self.request("POST", "/jobs", payload)
+
+                self.assertEqual(400, status)
+                self.assertIn(field_name, response["error"]["field_errors"])
+                self.assertEqual([field_name], response["error"]["details"]["fields"])
+
+    def test_empty_required_fields_return_field_errors(self):
+        for field_name in ("accession", "output_format"):
+            with self.subTest(field=field_name):
+                payload = dict(VALID_PAYLOAD, **{field_name: ""})
+
+                status, response = self.request("POST", "/jobs", payload)
+
+                self.assertEqual(400, status)
+                self.assertIn(field_name, response["error"]["field_errors"])
 
     def test_job_not_found_returns_404(self):
         status, payload = self.request("GET", "/jobs/missing-job")
 
         self.assertEqual(404, status)
         self.assertEqual("JOB_NOT_FOUND", payload["error"]["code"])
+        self.assertEqual("missing-job", payload["error"]["details"]["job_id"])
 
     def test_completed_job_is_not_cancellable(self):
         job_id = self.service.submit_job(VALID_PAYLOAD)["job_id"]
@@ -153,6 +222,7 @@ class ApiHttpServerTests(unittest.TestCase):
 
         self.assertEqual(409, status)
         self.assertEqual("JOB_NOT_CANCELLABLE", payload["error"]["code"])
+        self.assertIn("details", payload["error"])
 
     def test_http_module_contains_no_disallowed_runtime_primitives(self):
         source = inspect.getsource(http_server_module)
