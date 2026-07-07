@@ -157,6 +157,22 @@ Request JSON:
 }
 ```
 
+Canonical Coze-facing minimal request:
+
+```json
+{
+  "accession": "GSEMOCK001",
+  "analysis_type": "bulk",
+  "species": "Homo sapiens",
+  "output_format": "json",
+  "requested_by": "mock-coze-user"
+}
+```
+
+This minimal request omits optional `notes`; the mock response sets
+`request.notes` to an empty string. The example contains no secrets, download
+URLs, local paths, production paths, or real analysis instructions.
+
 Expected response shape:
 
 ```json
@@ -193,6 +209,11 @@ Field notes:
 - `updated_at`: UTC timestamp for the most recent status change.
 - `events`: status transition history.
 - `mock`: always `true` for this server.
+
+Coze should save `job_id` from the submit response. For later calls, Coze
+should read `status` and `message` to decide the next action and read the
+echoed `output_format` from `request.output_format`. `field_errors` appears
+only in failure responses.
 
 Stable success response fields for submit, status, and successful cancel:
 
@@ -533,7 +554,7 @@ Compatibility note:
 ```powershell
 curl.exe -s -X POST http://127.0.0.1:8000/jobs `
   -H "Content-Type: application/json" `
-  --data "{\"accession\":\"GSE123456\",\"analysis_type\":\"bulk\",\"species\":\"Homo sapiens\",\"requested_by\":\"coze-user@example.com\"}"
+  --data "{\"accession\":\"GSEMOCK001\",\"analysis_type\":\"bulk\",\"species\":\"Homo sapiens\",\"output_format\":\"json\"}"
 ```
 
 Expected HTTP status: `400`
@@ -543,12 +564,12 @@ Expected HTTP status: `400`
   "error": {
     "code": "INVALID_REQUEST",
     "details": {
-      "fields": ["output_format"]
+      "fields": ["requested_by"]
     },
     "field_errors": {
-      "output_format": ["missing required field"]
+      "requested_by": ["missing required field"]
     },
-    "message": "missing required field(s): output_format",
+    "message": "missing required field(s): requested_by",
     "retryable": false
   }
 }
@@ -670,6 +691,7 @@ Current mock implementation:
 The implementation and Coze contract now use the same whitelist. Phase 1 only
 echoes the requested format in mock responses and does not generate real
 format-specific reports.
+`zip` remains invalid.
 
 ### Other fields
 

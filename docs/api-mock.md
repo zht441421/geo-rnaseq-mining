@@ -66,6 +66,58 @@ Phase 1 暂不要求启动真实 HTTP 服务。`MockJobService` 提供与目标 
 
 不接受未知字段。因此诸如 `command`、`shell`、`input_path`、`workdir`、`snakefile` 等字段都会被拒绝。
 
+## Coze-Facing Example Fixtures
+
+The canonical minimal request that Coze can send in Phase 1 is:
+
+```json
+{
+  "accession": "GSEMOCK001",
+  "analysis_type": "bulk",
+  "species": "Homo sapiens",
+  "output_format": "json",
+  "requested_by": "mock-coze-user"
+}
+```
+
+This request intentionally omits optional `notes`. The mock response fills
+`request.notes` with an empty string. The request does not include download
+URLs, local paths, secrets, shell commands, or real production data access
+instructions.
+
+Additional valid `output_format` examples for contract tests:
+
+- `markdown`
+- `html`
+
+Phase 1 only echoes these values. It does not generate real Markdown or HTML
+reports.
+
+Canonical invalid request examples:
+
+```json
+{
+  "accession": "GSEMOCK001",
+  "analysis_type": "bulk",
+  "species": "Homo sapiens",
+  "output_format": "zip",
+  "requested_by": "mock-coze-user"
+}
+```
+
+```json
+{
+  "accession": "GSEMOCK001",
+  "analysis_type": "bulk",
+  "species": "Homo sapiens",
+  "output_format": "json"
+}
+```
+
+The first request fails with `INVALID_OUTPUT_FORMAT` and field-level location
+at `output_format`. The second fails with `INVALID_REQUEST` and field-level
+location at `requested_by`.
+
 ## Negative Request Contract
 
 Schema validation errors are stable enough for Coze-facing contract tests. The

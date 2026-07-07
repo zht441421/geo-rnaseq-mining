@@ -18,6 +18,25 @@ VALID_PAYLOAD = {
     "notes": "Phase 1 mock only",
 }
 
+COZE_VALID_JOB_REQUEST = {
+    "accession": "GSEMOCK001",
+    "analysis_type": "bulk",
+    "species": "Homo sapiens",
+    "output_format": "json",
+    "requested_by": "mock-coze-user",
+}
+COZE_MARKDOWN_JOB_REQUEST = dict(COZE_VALID_JOB_REQUEST, output_format="markdown")
+COZE_HTML_JOB_REQUEST = dict(COZE_VALID_JOB_REQUEST, output_format="html")
+COZE_INVALID_OUTPUT_FORMAT_REQUEST = dict(
+    COZE_VALID_JOB_REQUEST, output_format="zip"
+)
+COZE_MISSING_REQUESTED_BY_REQUEST = {
+    "accession": "GSEMOCK001",
+    "analysis_type": "bulk",
+    "species": "Homo sapiens",
+    "output_format": "json",
+}
+
 STATUS_RESPONSE_KEYS = {
     "job_id",
     "status",
@@ -67,13 +86,18 @@ class ApiMockTests(unittest.TestCase):
         parsed = datetime.fromisoformat(value)
         self.assertIsNotNone(parsed.tzinfo)
 
-    def assert_status_response_contract(self, response, expected_status):
+    def assert_status_response_contract(
+        self, response, expected_status, expected_request=None
+    ):
+        if expected_request is None:
+            expected_request = VALID_PAYLOAD
+
         self.assertEqual(STATUS_RESPONSE_KEYS, set(response))
         self.assertEqual(expected_status, response["status"])
         self.assertTrue(response["mock"])
         self.assertRegex(response["job_id"], r"^mock-job-\d{6}$")
         self.assertEqual(REQUEST_KEYS, set(response["request"]))
-        self.assertEqual(VALID_PAYLOAD, response["request"])
+        self.assertEqual(expected_request, response["request"])
         self.assert_iso_timestamp(response["created_at"])
         self.assert_iso_timestamp(response["updated_at"])
         self.assertIsInstance(response["events"], list)
@@ -108,6 +132,54 @@ class ApiMockTests(unittest.TestCase):
         self.assertEqual("queued", response["status"])
         self.assertTrue(response["mock"])
         self.assertEqual("GSE123456", response["request"]["accession"])
+
+    def test_coze_valid_request_example_submits_with_default_notes(self):
+        service = MockJobService()
+
+        response = service.submit_job(COZE_VALID_JOB_REQUEST)
+
+        expected_request = dict(COZE_VALID_JOB_REQUEST, notes="")
+        self.assert_status_response_contract(response, "queued", expected_request)
+        self.assertEqual("json", response["request"]["output_format"])
+
+    def test_coze_valid_request_examples_cover_allowed_output_formats(self):
+        service = MockJobService()
+
+        for payload in (
+            COZE_VALID_JOB_REQUEST,
+            COZE_MARKDOWN_JOB_REQUEST,
+            COZE_HTML_JOB_REQUEST,
+        ):
+            with self.subTest(output_format=payload["output_format"]):
+                response = service.submit_job(payload)
+
+                self.assertEqual(
+                    payload["output_format"],
+                    response["request"]["output_format"],
+                )
+                self.assertEqual(dict(payload, notes=""), response["request"])
+
+    def test_coze_invalid_request_examples_return_structured_errors(self):
+        cases = (
+            (
+                COZE_INVALID_OUTPUT_FORMAT_REQUEST,
+                "INVALID_OUTPUT_FORMAT",
+                "output_format",
+                {"allowed_values": ["json", "markdown", "html"]},
+            ),
+            (
+                COZE_MISSING_REQUESTED_BY_REQUEST,
+                "INVALID_REQUEST",
+                "requested_by",
+                {"fields": ["requested_by"]},
+            ),
+        )
+
+        for payload, code, field_name, details in cases:
+            with self.subTest(field=field_name):
+                error = self.assert_schema_field_error(payload, field_name, code)
+
+                self.assertEqual(details, error.details)
 
     def test_submit_job_success_response_contract_is_stable(self):
         service = MockJobService()

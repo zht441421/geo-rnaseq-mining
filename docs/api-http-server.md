@@ -51,6 +51,32 @@ Successful HTTP responses are stable enough for local Coze integration tests.
 They use `Content-Type: application/json; charset=utf-8` and
 `Cache-Control: no-store`.
 
+### Canonical Coze Request Example
+
+The smallest Coze-facing valid request uses only required schema fields:
+
+```json
+{
+  "accession": "GSEMOCK001",
+  "analysis_type": "bulk",
+  "species": "Homo sapiens",
+  "output_format": "json",
+  "requested_by": "mock-coze-user"
+}
+```
+
+The mock accepts `json`, `markdown`, and `html` as `output_format` values.
+`zip` remains invalid. Phase 1 only echoes `output_format`; it does not
+generate real format-specific reports.
+
+Canonical invalid examples for HTTP contract tests:
+
+- `output_format: "zip"` returns `400` with `INVALID_OUTPUT_FORMAT`.
+- Missing `requested_by` returns `400` with `INVALID_REQUEST`.
+
+Both error responses include `error.code`, `error.message`,
+`error.retryable`, `error.details`, and `error.field_errors`.
+
 ### GET /health
 
 Returns:
@@ -136,6 +162,8 @@ Completed result fields:
 
 The `result_summary` object includes `accession`, `analysis_type`, `species`,
 and `output_format`. Each artifact includes `name`, `type`, and `mock_uri`.
+Artifacts are mock placeholders only. They do not point to local files,
+download URLs, or generated production reports.
 
 Incomplete jobs return `409` with `JOB_NOT_READY`.
 

@@ -19,6 +19,23 @@ VALID_PAYLOAD = {
     "notes": "HTTP mock contract test",
 }
 
+COZE_VALID_JOB_REQUEST = {
+    "accession": "GSEMOCK001",
+    "analysis_type": "bulk",
+    "species": "Homo sapiens",
+    "output_format": "json",
+    "requested_by": "mock-coze-user",
+}
+COZE_INVALID_OUTPUT_FORMAT_REQUEST = dict(
+    COZE_VALID_JOB_REQUEST, output_format="zip"
+)
+COZE_MISSING_REQUESTED_BY_REQUEST = {
+    "accession": "GSEMOCK001",
+    "analysis_type": "bulk",
+    "species": "Homo sapiens",
+    "output_format": "json",
+}
+
 STATUS_RESPONSE_KEYS = {
     "job_id",
     "status",
@@ -100,10 +117,15 @@ class ApiHttpServerTests(unittest.TestCase):
         parsed = datetime.fromisoformat(value)
         self.assertIsNotNone(parsed.tzinfo)
 
-    def assert_status_response_contract(self, response, expected_status):
+    def assert_status_response_contract(
+        self, response, expected_status, expected_request=None
+    ):
+        if expected_request is None:
+            expected_request = VALID_PAYLOAD
+
         self.assertEqual(STATUS_RESPONSE_KEYS, set(response))
         self.assertEqual(expected_status, response["status"])
-        self.assertEqual(VALID_PAYLOAD, response["request"])
+        self.assertEqual(expected_request, response["request"])
         self.assertEqual(REQUEST_KEYS, set(response["request"]))
         self.assertRegex(response["job_id"], r"^mock-job-\d{6}$")
         self.assertTrue(response["mock"])
@@ -125,6 +147,43 @@ class ApiHttpServerTests(unittest.TestCase):
         self.assertEqual(200, status)
         self.assertEqual({"mock": True, "status": "ok"}, payload)
         self.assert_json_success_headers(headers)
+
+    def test_coze_valid_request_example_posts_successfully(self):
+        status, response, headers = self.request_with_headers(
+            "POST", "/jobs", COZE_VALID_JOB_REQUEST
+        )
+
+        expected_request = dict(COZE_VALID_JOB_REQUEST, notes="")
+        self.assertEqual(201, status)
+        self.assert_json_success_headers(headers)
+        self.assert_status_response_contract(response, "queued", expected_request)
+        self.assertEqual("json", response["request"]["output_format"])
+
+    def test_coze_invalid_request_examples_return_structured_errors(self):
+        cases = (
+            (
+                COZE_INVALID_OUTPUT_FORMAT_REQUEST,
+                "INVALID_OUTPUT_FORMAT",
+                "output_format",
+                {"allowed_values": ["json", "markdown", "html"]},
+            ),
+            (
+                COZE_MISSING_REQUESTED_BY_REQUEST,
+                "INVALID_REQUEST",
+                "requested_by",
+                {"fields": ["requested_by"]},
+            ),
+        )
+
+        for payload, code, field_name, details in cases:
+            with self.subTest(field=field_name):
+                status, response = self.request("POST", "/jobs", payload)
+
+                self.assertEqual(400, status)
+                self.assertEqual(code, response["error"]["code"])
+                self.assertFalse(response["error"]["retryable"])
+                self.assertEqual(details, response["error"]["details"])
+                self.assertIn(field_name, response["error"]["field_errors"])
 
     def test_submit_status_result_and_cancel_shape(self):
         status, created, headers = self.request_with_headers(

@@ -28,6 +28,89 @@ This contract is intentionally narrow. It is not a real production execution API
 
 ## 3. Request And Response Examples
 
+### 3.0 Canonical Coze Fixture Examples
+
+These examples are the smallest Coze-facing fixtures for Phase 1 contract
+checks. They are inline examples only; no real Coze call is made.
+
+Minimal valid job request:
+
+```json
+{
+  "accession": "GSEMOCK001",
+  "analysis_type": "bulk",
+  "species": "Homo sapiens",
+  "output_format": "json",
+  "requested_by": "mock-coze-user"
+}
+```
+
+Coze should send only structured fields. It should not send shell commands,
+file paths, download URLs, secrets, or pipeline-specific execution arguments.
+`notes` is optional and defaults to an empty string in the mock response.
+
+Invalid request with unsupported `output_format`:
+
+```json
+{
+  "accession": "GSEMOCK001",
+  "analysis_type": "bulk",
+  "species": "Homo sapiens",
+  "output_format": "zip",
+  "requested_by": "mock-coze-user"
+}
+```
+
+Expected error shape:
+
+```json
+{
+  "error": {
+    "code": "INVALID_OUTPUT_FORMAT",
+    "message": "output_format must be one of: json, markdown, html",
+    "retryable": false,
+    "details": {
+      "allowed_values": ["json", "markdown", "html"]
+    },
+    "field_errors": {
+      "output_format": ["must be one of: json, markdown, html"]
+    }
+  }
+}
+```
+
+Invalid request missing `requested_by`:
+
+```json
+{
+  "accession": "GSEMOCK001",
+  "analysis_type": "bulk",
+  "species": "Homo sapiens",
+  "output_format": "json"
+}
+```
+
+Expected error shape:
+
+```json
+{
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "missing required field(s): requested_by",
+    "retryable": false,
+    "details": {
+      "fields": ["requested_by"]
+    },
+    "field_errors": {
+      "requested_by": ["missing required field"]
+    }
+  }
+}
+```
+
+`field_errors` appears only in failure responses. Successful responses use the
+status/result shapes below.
+
 ### 3.1 Submit Job Request
 
 ```http
@@ -250,6 +333,9 @@ Expected success HTTP status codes:
 
 All Phase 1 success responses include `mock: true`. `markdown` and `html`
 remain mock output values only; no real Markdown or HTML report is generated.
+Coze should save `job_id` after `POST /jobs`, read `status` and `message` from
+status responses, and read the echoed `output_format` from
+`request.output_format` or completed `result_summary.output_format`.
 
 ### 3.7 Error Response
 
