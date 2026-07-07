@@ -513,7 +513,90 @@ Suggested user-facing language:
 - For `failed`: "The request failed validation or mock processing. Please review the error."
 - For `cancelled`: "The mock job was cancelled. No result was produced."
 
-## 9. Security Boundaries
+## 9. Coze Handoff Handling Rules
+
+These rules are for future Coze prompt-flow or tool-call wiring. The current
+repository has not connected to a real Coze service.
+
+### Success Responses
+
+After `POST /jobs`, Coze must save `job_id`. All later status, result, and
+cancel calls use that value.
+
+For user-facing progress messages, Coze should read:
+
+- `status`
+- `message`
+- `request.output_format`
+
+For completed results, Coze may also read:
+
+- `result_summary.output_format`
+- `artifacts`
+- `limitations`
+
+Successful responses do not include `field_errors`. Coze should not try to read
+`field_errors` unless the response contains an `error` object.
+
+### Failure Responses
+
+When a response contains `error`, Coze should read:
+
+- `error.code`
+- `error.message`
+- `error.retryable`
+- `error.field_errors`, when present
+- `error.details`, when present
+
+Use `field_errors` first for user-correctable input problems. For example,
+`output_format` errors should prompt the user to choose one of `json`,
+`markdown`, or `html`.
+
+If `error.retryable` is `false`, Coze should ask the user to correct the input
+instead of automatically retrying the same request.
+
+If `error.retryable` is `true`, Coze may retry conservatively or tell the user
+that the mock state is not ready yet. In Phase 1, `JOB_NOT_READY` is expected
+for jobs that have not reached `completed`.
+
+### Output Format Rules
+
+Legal values remain:
+
+- `json`
+- `markdown`
+- `html`
+
+Rejected values include:
+
+- `zip`
+- `pdf`
+- `txt`
+- `MARKDOWN`
+- empty string
+
+`markdown` and `html` are Phase 1 mock output values only. The mock echoes
+them in `request.output_format` and `result_summary.output_format`; it does
+not generate real Markdown or HTML reports.
+
+### Mock Result Rules
+
+`result_summary`, `artifacts`, and `limitations` are mock placeholders.
+Artifact URIs use the synthetic `mock://` scheme. They are not filesystem
+paths, signed URLs, download links, or production report locations.
+
+Coze should not claim that a biological result, real report, GEO/SRA download,
+Snakemake run, Conda run, or RNA-seq pipeline execution has happened.
+
+### Current Non-Production Boundaries
+
+- No real Coze integration is active.
+- No real RNA-seq pipeline is run.
+- No real GEO/SRA data is downloaded.
+- No shell command is accepted from Coze.
+- No secrets are exposed to Coze.
+
+## 10. Security Boundaries
 
 Security boundaries for Coze and backend integration:
 
@@ -530,7 +613,7 @@ Security boundaries for Coze and backend integration:
 - `analysis_type` and `output_format` must be enums.
 - Unknown fields should be rejected rather than ignored.
 
-## 10. Migration Points From Mock To Real Backend
+## 11. Migration Points From Mock To Real Backend
 
 Before moving from mock to real backend execution, the following pieces must be designed and implemented:
 

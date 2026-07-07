@@ -31,10 +31,10 @@ Out of scope:
 ## 2. Current Baseline
 
 - Branch: `123`
-- Commit: `38d46269eae872e925f02e9a93c2841d1984d723`
-- Environment Solve #30: Success
-- Phase 1.2 HTTP mock server is in the repository.
-- HTTP mock server has passed local `unittest`.
+- Commit: `fcadcf0f4c4e9ca2a07683676cf2752a8660de5b`
+- Environment Solve #36: Success
+- Phase 1.3d Coze-facing examples are in the repository.
+- HTTP mock server and API contract tests have passed local `unittest`.
 
 Relevant files:
 
@@ -46,7 +46,173 @@ Relevant files:
 - `docs/api-http-server.md`
 - `docs/coze-api-contract.md`
 
-## 3. Start The Server
+## 3. Operator Checklist
+
+Use this checklist before handing the local API mock to a human tester or a
+future Coze integration step.
+
+### Preconditions
+
+- Confirm the working branch is `123`.
+- Run commands from the repository root.
+- Use Python directly; no Conda environment creation is required for this
+  checklist.
+- Do not run Snakemake.
+- Do not run a real RNA-seq pipeline.
+- Do not access GEO, SRA, or external services.
+- Do not generate real Markdown, HTML, or biological reports.
+- Do not place secrets, local absolute paths, production paths, or download
+  URLs in requests, docs, prompts, or examples.
+
+### Start The Local API
+
+Start the mock server explicitly:
+
+```powershell
+python -m api.http_server
+```
+
+Expected default address:
+
+```text
+http://127.0.0.1:8000
+```
+
+Importing `api.http_server` does not listen on a port. The server starts only
+when the module is run explicitly or when a caller invokes `serve_forever()` on
+a server returned by `build_server()`.
+
+### Connectivity Check
+
+In a second terminal:
+
+```powershell
+curl.exe -s http://127.0.0.1:8000/health
+```
+
+Expected response:
+
+```json
+{
+  "mock": true,
+  "status": "ok"
+}
+```
+
+This only proves the mock HTTP handler is reachable. It does not prove that a
+production workflow exists.
+
+### Submit The Minimal Valid Job
+
+```powershell
+curl.exe -s -X POST http://127.0.0.1:8000/jobs `
+  -H "Content-Type: application/json" `
+  --data "{\"accession\":\"GSEMOCK001\",\"analysis_type\":\"bulk\",\"species\":\"Homo sapiens\",\"output_format\":\"json\",\"requested_by\":\"mock-coze-user\"}"
+```
+
+Operator checks:
+
+- HTTP status should be `201`.
+- Save `job_id`; every follow-up call uses it.
+- Confirm `status` is `queued`.
+- Confirm `mock` is `true`.
+- Confirm `request.output_format` is `json`.
+- Confirm `message` explains this is a mock queued job.
+
+`markdown` and `html` are also valid `output_format` values, but Phase 1 only
+echoes them. It does not generate real Markdown or HTML reports.
+
+### Query Job Status
+
+```powershell
+curl.exe -s http://127.0.0.1:8000/jobs/mock-job-000001
+```
+
+Operator checks:
+
+- HTTP status should be `200`.
+- Read `status` and `message`.
+- Treat `queued`, `validating`, `ready`, `running`, and `summarizing` as
+  non-terminal mock states.
+- Treat `completed`, `failed`, and `cancelled` as terminal mock states.
+- Do not infer that any shell command, worker, Snakemake job, or RNA-seq
+  analysis is running.
+
+### Query Result
+
+```powershell
+curl.exe -s http://127.0.0.1:8000/jobs/mock-job-000001/result
+```
+
+For a job that is not completed, expect `409 JOB_NOT_READY` with
+`retryable: true`. This is normal for the default HTTP-only flow.
+
+For a completed mock job, the response uses:
+
+- `ready: true`
+- `result_summary`
+- `artifacts`
+- `limitations`
+
+Operator checks:
+
+- `result_summary.output_format` is an echo of the request.
+- `artifacts` are `mock://` placeholders, not local files or download URLs.
+- `limitations` must state that no Snakemake, Conda, GEO/SRA, or production
+  analysis was run.
+- Do not treat mock artifacts as generated reports.
+
+### Cancel Job
+
+```powershell
+curl.exe -s -X POST http://127.0.0.1:8000/jobs/mock-job-000001/cancel
+```
+
+Operator checks:
+
+- A cancellable job returns status `cancelled`.
+- The response still includes `job_id`, `request`, `events`, `mock`, and
+  `message`.
+- Cancellation changes only in-memory mock state.
+- It does not cancel a real process, worker, Snakemake run, or RNA-seq
+  pipeline because Phase 1 starts none of those.
+
+### Failure Response Handling
+
+For failures, use:
+
+- `error.code` for programmatic handling.
+- `error.message` for a concise explanation.
+- `error.retryable` to decide whether retry makes sense.
+- `error.field_errors` for user-correctable fields.
+- `error.details` for structured metadata such as allowed values, missing
+  fields, job IDs, or content type.
+
+Common failures to verify:
+
+- `INVALID_OUTPUT_FORMAT`: `zip`, `pdf`, `txt`, `MARKDOWN`, and empty string
+  are invalid.
+- `UNSUPPORTED_MEDIA_TYPE`: `POST /jobs` requires
+  `Content-Type: application/json`.
+- `UNKNOWN_FIELD`: unsupported fields such as `command`, `shell`, `input_path`,
+  `workdir`, or `snakefile` are rejected.
+- Missing required field: `field_errors` identifies the missing field.
+- `JOB_NOT_FOUND`: the `job_id` does not exist in the in-memory store.
+- `JOB_NOT_READY`: result requested before completion.
+- `JOB_NOT_CANCELLABLE`: terminal jobs cannot be cancelled again.
+
+### Forbidden Operator Actions
+
+- Do not treat `zip` as a valid `output_format`.
+- Do not promise real Markdown or HTML reports.
+- Do not treat `mock://` artifacts as files.
+- Do not expose local absolute paths to Coze.
+- Do not let Coze execute arbitrary shell commands.
+- Do not put secrets in request examples, prompt text, docs, or logs.
+- Do not run Snakemake, Conda, env create, production jobs, GEO/SRA downloads,
+  or real RNA-seq analysis as part of this checklist.
+
+## 4. Start The Server
 
 The HTTP mock server uses only Python standard library modules.
 
@@ -83,7 +249,7 @@ Import behavior:
 
 Stop the local server with `Ctrl+C` in the terminal running it.
 
-## 4. Health Check
+## 5. Health Check
 
 Endpoint:
 
@@ -112,7 +278,7 @@ Meaning:
 - The HTTP handler is responding.
 - This does not prove that any production workflow is available.
 
-## 5. Submit A Mock Job
+## 6. Submit A Mock Job
 
 Endpoint:
 
@@ -241,7 +407,7 @@ Each `events` item contains:
 - `timestamp`
 - `message`
 
-## 6. Query Job Status
+## 7. Query Job Status
 
 Endpoint:
 
@@ -283,11 +449,11 @@ Expected response example:
 }
 ```
 
-In Phase 1.2, the HTTP server does not run a worker and does not advance jobs
+In Phase 1, the HTTP server does not run a worker and does not advance jobs
 automatically. Jobs submitted over HTTP remain `queued` unless a test or local
 Python caller advances the in-memory service.
 
-## 7. Query Job Result
+## 8. Query Job Result
 
 Endpoint:
 
@@ -301,7 +467,7 @@ PowerShell:
 curl.exe -s http://127.0.0.1:8000/jobs/mock-job-000001/result
 ```
 
-### 7.1 Completed Response Example
+### 8.1 Completed Response Example
 
 A completed job returns HTTP `200`:
 
@@ -354,7 +520,7 @@ Note: with the default HTTP-only flow, jobs do not become `completed`
 automatically. This response shape is useful for Coze contract design and
 unit tests.
 
-### 7.2 Not Ready Response
+### 8.2 Not Ready Response
 
 For a newly submitted job, result lookup returns HTTP `409` with
 `JOB_NOT_READY`:
@@ -373,7 +539,7 @@ For a newly submitted job, result lookup returns HTTP `409` with
 }
 ```
 
-## 8. Cancel Job
+## 9. Cancel Job
 
 Endpoint:
 
@@ -441,9 +607,9 @@ Example:
 }
 ```
 
-## 9. Error Scenarios
+## 10. Error Scenarios
 
-### 9.1 Invalid JSON
+### 10.1 Invalid JSON
 
 PowerShell:
 
@@ -468,7 +634,7 @@ Expected HTTP status: `400`
 }
 ```
 
-### 9.2 Missing Or Wrong Content-Type
+### 10.2 Missing Or Wrong Content-Type
 
 ```powershell
 curl.exe -s -X POST http://127.0.0.1:8000/jobs `
@@ -490,7 +656,7 @@ Expected HTTP status: `415`
 }
 ```
 
-### 9.3 Invalid analysis_type
+### 10.3 Invalid analysis_type
 
 ```powershell
 curl.exe -s -X POST http://127.0.0.1:8000/jobs `
@@ -516,7 +682,7 @@ Expected HTTP status: `400`
 }
 ```
 
-### 9.4 Invalid output_format
+### 10.4 Invalid output_format
 
 ```powershell
 curl.exe -s -X POST http://127.0.0.1:8000/jobs `
@@ -549,7 +715,7 @@ Compatibility note:
 - `markdown` is accepted as a mock output format, but no real Markdown report is generated in Phase 1.
 - `zip`, `pdf`, `txt`, `MARKDOWN`, and empty string are invalid.
 
-### 9.5 Missing Required Field
+### 10.5 Missing Required Field
 
 ```powershell
 curl.exe -s -X POST http://127.0.0.1:8000/jobs `
@@ -575,7 +741,7 @@ Expected HTTP status: `400`
 }
 ```
 
-### 9.6 Unknown Field
+### 10.6 Unknown Field
 
 ```powershell
 curl.exe -s -X POST http://127.0.0.1:8000/jobs `
@@ -601,7 +767,7 @@ Expected HTTP status: `400`
 }
 ```
 
-### 9.7 Job Not Found
+### 10.7 Job Not Found
 
 ```powershell
 curl.exe -s http://127.0.0.1:8000/jobs/missing-job
@@ -622,7 +788,7 @@ Expected HTTP status: `404`
 }
 ```
 
-### 9.8 Result Not Ready
+### 10.8 Result Not Ready
 
 ```powershell
 curl.exe -s http://127.0.0.1:8000/jobs/mock-job-000001/result
@@ -644,7 +810,7 @@ Expected HTTP status: `409`
 }
 ```
 
-### 9.9 Unknown Path
+### 10.9 Unknown Path
 
 ```powershell
 curl.exe -s http://127.0.0.1:8000/not-a-real-endpoint
@@ -665,7 +831,7 @@ Expected HTTP status: `404`
 }
 ```
 
-## 10. Whitelisted Parameters
+## 11. Whitelisted Parameters
 
 ### analysis_type
 
@@ -705,7 +871,7 @@ Current submit schema:
 
 Unknown fields are rejected.
 
-## 11. Manual Validation Before Coze Integration
+## 12. Manual Validation Before Coze Integration
 
 Recommended manual flow:
 
@@ -764,7 +930,7 @@ Recommended manual flow:
 
 9. Stop the server with `Ctrl+C`.
 
-## 12. Safety Boundaries
+## 13. Safety Boundaries
 
 The local HTTP mock server must remain inside these boundaries:
 
@@ -782,7 +948,7 @@ The local HTTP mock server must remain inside these boundaries:
 `accession` is a plain string parameter. It is not a path, command, URL, or
 Snakemake target.
 
-## 13. Troubleshooting
+## 14. Troubleshooting
 
 ### Port Is Already In Use
 
@@ -878,11 +1044,11 @@ Symptom:
 
 Action:
 
-- This is expected for jobs submitted only through HTTP in Phase 1.2.
+- This is expected for jobs submitted only through HTTP in Phase 1.
 - The server has no worker and does not advance jobs automatically.
 - Coze should treat this as a retryable state until a future worker exists.
 
-## 14. Future Migration Notes
+## 15. Future Migration Notes
 
 Future phases can evaluate a real HTTP framework such as FastAPI, Flask, or
 another production-ready service framework. That should happen only after the

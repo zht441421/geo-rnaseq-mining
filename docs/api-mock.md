@@ -40,6 +40,39 @@ Phase 1 暂不要求启动真实 HTTP 服务。`MockJobService` 提供与目标 
 
 另有 `advance_job(job_id, next_status)` 仅用于测试和前台原型验证，它不会启动 worker，也不会执行任何生产任务。
 
+## Operator And Handoff Boundaries
+
+The API mock is a contract and handoff tool only. It is responsible for:
+
+- validating structured request fields;
+- returning stable `job_id`, `status`, `message`, and `mock` fields;
+- echoing the accepted `request`;
+- exposing deterministic in-memory status transitions for tests;
+- returning synthetic result metadata after a mock job reaches `completed`.
+
+It is not responsible for:
+
+- running Snakemake;
+- creating or solving Conda environments;
+- downloading GEO/SRA data;
+- running a real RNA-seq pipeline;
+- generating real Markdown or HTML reports;
+- cancelling real operating-system processes;
+- storing durable job state.
+
+`output_format` is only an enum value in Phase 1. The mock echoes `json`,
+`markdown`, or `html` in `request.output_format` and completed
+`result_summary.output_format`. `markdown` and `html` do not cause report
+rendering.
+
+`result_summary`, `artifacts`, and `limitations` are mock placeholders.
+Artifact URIs use `mock://` and are not local file paths, production paths, or
+download URLs.
+
+`cancel_job` only changes in-memory mock status to `cancelled`. It does not
+terminate a worker, shell command, Snakemake run, Conda process, or RNA-seq
+pipeline.
+
 ## Submit Job Schema
 
 `POST /jobs` mock 接受以下字段：

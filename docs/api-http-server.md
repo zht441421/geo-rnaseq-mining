@@ -1,4 +1,4 @@
-# Phase 1.2 HTTP Mock Server
+# Phase 1 HTTP Mock Server
 
 This document describes the local HTTP entrypoint for the Phase 1 API mock.
 It is intended for local development and Coze integration shape checks only.
@@ -50,6 +50,57 @@ All requests and responses use JSON.
 Successful HTTP responses are stable enough for local Coze integration tests.
 They use `Content-Type: application/json; charset=utf-8` and
 `Cache-Control: no-store`.
+
+The server must not include Python tracebacks, internal exception objects,
+absolute local paths, production paths, or secrets in JSON responses.
+
+### HTTP Status And Header Checklist
+
+Success status codes:
+
+| Endpoint | Status |
+|---|---:|
+| `GET /health` | `200` |
+| `POST /jobs` | `201` |
+| `GET /jobs/{job_id}` | `200` |
+| `GET /jobs/{job_id}/result` when completed | `200` |
+| `POST /jobs/{job_id}/cancel` when cancellable | `200` |
+
+Common error status codes:
+
+| Status | Typical reason |
+|---:|---|
+| `400` | Invalid JSON, schema validation error, unknown field |
+| `404` | Unknown endpoint or missing job |
+| `409` | Result not ready or job not cancellable |
+| `413` | Request body too large |
+| `415` | Missing or non-JSON `Content-Type` for `POST /jobs` |
+
+Response headers for JSON responses:
+
+- `Content-Type: application/json; charset=utf-8`
+- `Cache-Control: no-store`
+
+`POST /jobs` requires:
+
+```http
+Content-Type: application/json
+```
+
+Missing or incorrect content type returns `415`:
+
+```json
+{
+  "error": {
+    "code": "UNSUPPORTED_MEDIA_TYPE",
+    "message": "Content-Type must be application/json.",
+    "retryable": false,
+    "details": {
+      "content_type": null
+    }
+  }
+}
+```
 
 ### Canonical Coze Request Example
 
@@ -260,7 +311,7 @@ Do not expose it as a production service.
 
 ## Tests
 
-Run the Phase 1 and Phase 1.2 tests:
+Run the API mock and HTTP server tests:
 
 ```bash
 python -m unittest tests.test_api_mock tests.test_api_http_server -v
