@@ -1,5 +1,6 @@
 import inspect
 import unittest
+from datetime import datetime
 
 from api import JobStatus, MockJobService
 from api.job_schema import SchemaValidationError
@@ -17,6 +18,38 @@ VALID_PAYLOAD = {
     "notes": "Phase 1 mock only",
 }
 
+STATUS_RESPONSE_KEYS = {
+    "job_id",
+    "status",
+    "request",
+    "created_at",
+    "updated_at",
+    "events",
+    "mock",
+    "message",
+}
+REQUEST_KEYS = {
+    "accession",
+    "analysis_type",
+    "species",
+    "output_format",
+    "requested_by",
+    "notes",
+}
+EVENT_KEYS = {"status", "timestamp", "message"}
+NOT_READY_RESULT_KEYS = {"job_id", "status", "ready", "mock", "message"}
+COMPLETED_RESULT_KEYS = {
+    "job_id",
+    "status",
+    "ready",
+    "mock",
+    "result_summary",
+    "artifacts",
+    "limitations",
+}
+RESULT_SUMMARY_KEYS = {"accession", "analysis_type", "species", "output_format"}
+ARTIFACT_KEYS = {"name", "type", "mock_uri"}
+
 
 class ApiMockTests(unittest.TestCase):
     def assert_schema_field_error(self, payload, field_name, code=None):
@@ -30,6 +63,42 @@ class ApiMockTests(unittest.TestCase):
             self.assertEqual(code, error.code)
         return error
 
+    def assert_iso_timestamp(self, value):
+        parsed = datetime.fromisoformat(value)
+        self.assertIsNotNone(parsed.tzinfo)
+
+    def assert_status_response_contract(self, response, expected_status):
+        self.assertEqual(STATUS_RESPONSE_KEYS, set(response))
+        self.assertEqual(expected_status, response["status"])
+        self.assertTrue(response["mock"])
+        self.assertRegex(response["job_id"], r"^mock-job-\d{6}$")
+        self.assertEqual(REQUEST_KEYS, set(response["request"]))
+        self.assertEqual(VALID_PAYLOAD, response["request"])
+        self.assert_iso_timestamp(response["created_at"])
+        self.assert_iso_timestamp(response["updated_at"])
+        self.assertIsInstance(response["events"], list)
+        self.assertGreaterEqual(len(response["events"]), 1)
+        for event in response["events"]:
+            self.assertEqual(EVENT_KEYS, set(event))
+            self.assertIn(
+                event["status"],
+                {
+                    "queued",
+                    "validating",
+                    "ready",
+                    "running",
+                    "summarizing",
+                    "completed",
+                    "failed",
+                    "cancelled",
+                },
+            )
+            self.assert_iso_timestamp(event["timestamp"])
+            self.assertIsInstance(event["message"], str)
+            self.assertTrue(event["message"])
+        self.assertIsInstance(response["message"], str)
+        self.assertTrue(response["message"])
+
     def test_submit_job_creates_queued_mock_job(self):
         service = MockJobService()
 
@@ -39,6 +108,39 @@ class ApiMockTests(unittest.TestCase):
         self.assertEqual("queued", response["status"])
         self.assertTrue(response["mock"])
         self.assertEqual("GSE123456", response["request"]["accession"])
+
+    def test_submit_job_success_response_contract_is_stable(self):
+        service = MockJobService()
+
+        response = service.submit_job(VALID_PAYLOAD)
+
+        self.assert_status_response_contract(response, "queued")
+        self.assertEqual(
+            {
+                "status": "queued",
+                "timestamp": response["created_at"],
+                "message": "Mock job accepted. No execution has started.",
+            },
+            response["events"][0],
+        )
+
+    def test_get_job_success_response_contract_is_stable(self):
+        service = MockJobService()
+        job_id = service.submit_job(VALID_PAYLOAD)["job_id"]
+
+        response = service.get_job(job_id)
+
+        self.assert_status_response_contract(response, "queued")
+
+    def test_cancel_success_response_contract_is_stable(self):
+        service = MockJobService()
+        job_id = service.submit_job(VALID_PAYLOAD)["job_id"]
+
+        response = service.cancel_job(job_id)
+
+        self.assert_status_response_contract(response, "cancelled")
+        self.assertEqual("cancelled", response["events"][-1]["status"])
+        self.assertEqual("Mock job cancelled.", response["events"][-1]["message"])
 
     def test_submit_job_rejects_non_whitelisted_analysis_type(self):
         service = MockJobService()
@@ -169,6 +271,59 @@ class ApiMockTests(unittest.TestCase):
         self.assertEqual("completed", result["status"])
         self.assertTrue(result["mock"])
         self.assertIn("artifacts", result)
+        self.assertIn("no Snakemake", result["limitations"][0])
+
+    def test_not_ready_result_response_contract_is_stable(self):
+        service = MockJobService()
+        job_id = service.submit_job(VALID_PAYLOAD)["job_id"]
+
+        result = service.get_job_result(job_id)
+
+        self.assertEqual(NOT_READY_RESULT_KEYS, set(result))
+        self.assertEqual(job_id, result["job_id"])
+        self.assertEqual("queued", result["status"])
+        self.assertFalse(result["ready"])
+        self.assertTrue(result["mock"])
+        self.assertEqual(
+            "Mock result is only available after completed status.",
+            result["message"],
+        )
+
+    def test_completed_result_response_contract_is_stable(self):
+        service = MockJobService()
+        job_id = service.submit_job(VALID_PAYLOAD)["job_id"]
+        for status in (
+            JobStatus.VALIDATING,
+            JobStatus.READY,
+            JobStatus.RUNNING,
+            JobStatus.SUMMARIZING,
+            JobStatus.COMPLETED,
+        ):
+            service.advance_job(job_id, status)
+
+        result = service.get_job_result(job_id)
+
+        self.assertEqual(COMPLETED_RESULT_KEYS, set(result))
+        self.assertEqual(job_id, result["job_id"])
+        self.assertEqual("completed", result["status"])
+        self.assertTrue(result["ready"])
+        self.assertTrue(result["mock"])
+        self.assertEqual(RESULT_SUMMARY_KEYS, set(result["result_summary"]))
+        self.assertEqual(
+            {
+                "accession": "GSE123456",
+                "analysis_type": "bulk",
+                "species": "Homo sapiens",
+                "output_format": "html",
+            },
+            result["result_summary"],
+        )
+        self.assertIsInstance(result["artifacts"], list)
+        self.assertGreaterEqual(len(result["artifacts"]), 1)
+        for artifact in result["artifacts"]:
+            self.assertEqual(ARTIFACT_KEYS, set(artifact))
+            self.assertTrue(artifact["mock_uri"].startswith(f"mock://{job_id}/"))
+        self.assertIsInstance(result["limitations"], list)
         self.assertIn("no Snakemake", result["limitations"][0])
 
     def test_cancel_marks_cancellable_jobs_cancelled(self):

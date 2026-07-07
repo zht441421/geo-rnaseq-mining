@@ -112,6 +112,89 @@ Legal values remain:
 `markdown` and `html` are mock format values only. Phase 1 does not generate
 real Markdown or HTML reports.
 
+## Happy-Path Response Contract
+
+Successful `submit_job`, `get_job`, and `cancel_job` calls return the same
+status response shape:
+
+```json
+{
+  "job_id": "mock-job-000001",
+  "status": "queued",
+  "request": {
+    "accession": "GSE123456",
+    "analysis_type": "bulk",
+    "species": "Homo sapiens",
+    "output_format": "html",
+    "requested_by": "coze-user@example.com",
+    "notes": "Phase 1 mock only"
+  },
+  "created_at": "2026-07-05T06:00:00+00:00",
+  "updated_at": "2026-07-05T06:00:00+00:00",
+  "events": [
+    {
+      "status": "queued",
+      "timestamp": "2026-07-05T06:00:00+00:00",
+      "message": "Mock job accepted. No execution has started."
+    }
+  ],
+  "mock": true,
+  "message": "Mock job is queued; no real execution is scheduled."
+}
+```
+
+Stable top-level fields:
+
+- `job_id`
+- `status`
+- `request`
+- `created_at`
+- `updated_at`
+- `events`
+- `mock`
+- `message`
+
+Stable `request` fields:
+
+- `accession`
+- `analysis_type`
+- `species`
+- `output_format`
+- `requested_by`
+- `notes`
+
+Each event contains:
+
+- `status`
+- `timestamp`
+- `message`
+
+`get_job_result` returns a not-ready shape until the job reaches `completed`:
+
+```json
+{
+  "job_id": "mock-job-000001",
+  "status": "queued",
+  "ready": false,
+  "mock": true,
+  "message": "Mock result is only available after completed status."
+}
+```
+
+Completed mock results expose these stable top-level fields:
+
+- `job_id`
+- `status`
+- `ready`
+- `mock`
+- `result_summary`
+- `artifacts`
+- `limitations`
+
+`result_summary` echoes `accession`, `analysis_type`, `species`, and
+`output_format`. Artifacts remain synthetic `mock://` references; they are not
+filesystem paths and do not represent generated production reports.
+
 ## Job 状态机
 
 状态集合：

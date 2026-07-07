@@ -47,6 +47,10 @@ All requests and responses use JSON.
 
 ## Response Behavior
 
+Successful HTTP responses are stable enough for local Coze integration tests.
+They use `Content-Type: application/json; charset=utf-8` and
+`Cache-Control: no-store`.
+
 ### GET /health
 
 Returns:
@@ -81,15 +85,57 @@ Allowed `output_format` values:
 
 Success status: `201`.
 
+Success response fields:
+
+- `job_id`
+- `status`
+- `request`
+- `created_at`
+- `updated_at`
+- `events`
+- `mock`
+- `message`
+
+The nested `request` object includes:
+
+- `accession`
+- `analysis_type`
+- `species`
+- `output_format`
+- `requested_by`
+- `notes`
+
+Each `events` item includes:
+
+- `status`
+- `timestamp`
+- `message`
+
 ### GET /jobs/{job_id}
 
 Returns the current mock job status.
+
+Success status: `200`. The response uses the same status response fields as
+`POST /jobs`.
 
 Unknown job status: `404` with `JOB_NOT_FOUND`.
 
 ### GET /jobs/{job_id}/result
 
 Completed jobs return `200` and a mock result.
+
+Completed result fields:
+
+- `job_id`
+- `status`
+- `ready`
+- `mock`
+- `result_summary`
+- `artifacts`
+- `limitations`
+
+The `result_summary` object includes `accession`, `analysis_type`, `species`,
+and `output_format`. Each artifact includes `name`, `type`, and `mock_uri`.
 
 Incomplete jobs return `409` with `JOB_NOT_READY`.
 
@@ -98,6 +144,8 @@ Unknown jobs return `404` with `JOB_NOT_FOUND`.
 ### POST /jobs/{job_id}/cancel
 
 Cancellable jobs return `200` and status `cancelled`.
+
+Successful cancellation uses the same status response fields as `POST /jobs`.
 
 Terminal jobs return `409` with `JOB_NOT_CANCELLABLE`.
 

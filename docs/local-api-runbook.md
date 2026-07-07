@@ -194,6 +194,32 @@ Field notes:
 - `events`: status transition history.
 - `mock`: always `true` for this server.
 
+Stable success response fields for submit, status, and successful cancel:
+
+- `job_id`
+- `status`
+- `request`
+- `created_at`
+- `updated_at`
+- `events`
+- `mock`
+- `message`
+
+Stable nested `request` fields:
+
+- `accession`
+- `analysis_type`
+- `species`
+- `output_format`
+- `requested_by`
+- `notes`
+
+Each `events` item contains:
+
+- `status`
+- `timestamp`
+- `message`
+
 ## 6. Query Job Status
 
 Endpoint:
@@ -289,6 +315,20 @@ A completed job returns HTTP `200`:
 }
 ```
 
+Completed result success fields:
+
+- `job_id`
+- `status`
+- `ready`
+- `mock`
+- `result_summary`
+- `artifacts`
+- `limitations`
+
+The `result_summary` object echoes `accession`, `analysis_type`, `species`,
+and `output_format`. Each artifact includes `name`, `type`, and `mock_uri`.
+Artifact URIs use the synthetic `mock://` scheme and are not filesystem paths.
+
 Note: with the default HTTP-only flow, jobs do not become `completed`
 automatically. This response shape is useful for Coze contract design and
 unit tests.
@@ -330,6 +370,16 @@ Success response example:
 
 ```json
 {
+  "created_at": "2026-07-05T12:00:00+00:00",
+  "updated_at": "2026-07-05T12:01:00+00:00",
+  "request": {
+    "accession": "GSE123456",
+    "analysis_type": "bulk",
+    "species": "Homo sapiens",
+    "output_format": "html",
+    "requested_by": "coze-user@example.com",
+    "notes": "Local mock validation"
+  },
   "job_id": "mock-job-000001",
   "status": "cancelled",
   "mock": true,

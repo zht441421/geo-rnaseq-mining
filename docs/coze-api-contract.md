@@ -197,7 +197,61 @@ POST /jobs/mock-job-000001/cancel
 }
 ```
 
-### 3.6 Error Response
+### 3.6 Happy-Path Field Stability
+
+Coze callers can treat the following success fields as stable in Phase 1.
+
+`POST /jobs`, `GET /jobs/{job_id}`, and successful
+`POST /jobs/{job_id}/cancel` responses use the same status response shape:
+
+- `job_id`
+- `status`
+- `request`
+- `created_at`
+- `updated_at`
+- `events`
+- `mock`
+- `message`
+
+The nested `request` object always includes:
+
+- `accession`
+- `analysis_type`
+- `species`
+- `output_format`
+- `requested_by`
+- `notes`
+
+Each item in `events` includes:
+
+- `status`
+- `timestamp`
+- `message`
+
+The completed result response uses these top-level fields:
+
+- `job_id`
+- `status`
+- `ready`
+- `mock`
+- `result_summary`
+- `artifacts`
+- `limitations`
+
+The `result_summary` object echoes `accession`, `analysis_type`, `species`, and
+`output_format`. Artifact objects include `name`, `type`, and `mock_uri`.
+
+Expected success HTTP status codes:
+
+- `POST /jobs`: `201`
+- `GET /jobs/{job_id}`: `200`
+- `GET /jobs/{job_id}/result` when completed: `200`
+- `POST /jobs/{job_id}/cancel` when cancellable: `200`
+
+All Phase 1 success responses include `mock: true`. `markdown` and `html`
+remain mock output values only; no real Markdown or HTML report is generated.
+
+### 3.7 Error Response
 
 ```json
 {
