@@ -2,31 +2,31 @@
 
 更新时间：2026-07-09（Asia/Shanghai）
 
-本文件用于快速交接当前项目状态。它总结当前 Git 基线、Phase 1.3a 到 Phase 1.5g 的完成情况、已验证内容、仍然禁止或未支持的边界，以及建议下一步。当前文件是项目交接摘要，不代表生产分析已经可运行。
+本文件用于快速交接当前项目状态。它总结当前 Git 基线、Phase 1.3a 到 Phase 1.6a 的完成情况、已验证内容、仍然禁止或未支持的边界，以及建议下一步。当前文件是项目交接摘要，不代表生产分析已经可运行。
 
 ## 一句话结论
 
-`geo-rnaseq-mining` 已从早期 Snakemake / Conda 环境验证，推进到产品化 Phase 1 的本地 API mock 契约阶段，并完成 Phase 1.5 design-only completion baseline / operator handoff。当前已经完成 API mock 的输出格式对齐、负向错误契约、成功响应契约、Coze-facing 示例、local operator checklist、Coze handoff 文档加固，以及 Phase 1.5a 到 Phase 1.5f 的设计文档链路。
+`geo-rnaseq-mining` 已从早期 Snakemake / Conda 环境验证，推进到产品化 Phase 1 的本地 API mock 契约阶段，并完成 Phase 1.5 design-only completion baseline / operator handoff 和 Phase 1.6a runtime implementation readiness audit。当前已经完成 API mock 的输出格式对齐、负向错误契约、成功响应契约、Coze-facing 示例、local operator checklist、Coze handoff 文档加固，以及 Phase 1.5a 到 Phase 1.5f 的设计文档链路。
 
-项目目前仍处于 mock / contract / design-only baseline 阶段：
+项目目前仍处于 mock / contract / design-only baseline / readiness-audit 阶段：
 
 - 未接入真实 Coze。
 - 未运行真实 RNA-seq pipeline。
 - 未生成真实 Markdown / HTML 报告。
 - 未访问真实 GEO / SRA 数据。
 - 未运行生产 Snakemake jobs。
-- 未实现 runtime execution / parser / validator / planner / runner / approval system / API integration。
+- 未实现 runtime execution / parser / validator / planner / runner / approval system / API integration / sandbox / artifact/database/network boundary。
 
 ## 当前 Git 与验证基线
 
 - 项目名：`geo-rnaseq-mining`
 - 当前分支：`123`
-- 当前 HEAD baseline：`19d6965`
-- 完整 SHA：`19d6965fb2fcdcadcdc2614eaddda75b546d15c0`
-- 最新提交说明：`Document operator approval record design`
+- 当前 HEAD baseline：`282fe0f`
+- 完整 SHA：`282fe0f132d1ce08f5200bf402f1e3392a220e90`
+- 最新提交说明：`Add Phase 1.5 completion baseline`
 - 最新 CI 验证：Environment Solve #37
 - CI 状态：Success
-- 当前阶段：Phase 1.5g completion baseline / operator handoff（design-only）
+- 当前阶段：Phase 1.6a runtime implementation readiness audit（docs/tests only）
 - 长期本地交接文件：`PROJECT_SUMMARY_FOR_USER.md`
 
 ## 当前项目定位
@@ -554,3 +554,35 @@ Phase 1.6a runtime implementation readiness audit docs/tests only, sandbox
 boundary design docs/tests only, artifact persistence boundary design
 docs/tests only, or network boundary design docs/tests only. Do not directly
 enter real execution implementation.
+
+## Phase 1.6a runtime implementation readiness audit docs/tests only
+
+Phase 1.6a starts from the current HEAD baseline
+`282fe0f132d1ce08f5200bf402f1e3392a220e90` (`282fe0f`) on branch `123`.
+
+The new readiness audit reference is
+`docs/phase-1-6a-runtime-implementation-readiness-audit.md`, with coverage in
+`tests/test_phase_1_6a_runtime_implementation_readiness_audit_docs.py`.
+
+Phase 1.6a is a readiness audit docs/tests only phase. It does not approve or
+implement real runtime work. The conclusion is: not ready for real runtime
+implementation.
+
+The audit confirms that Phase 1.5 created a design-only safety baseline, but
+that baseline is not implementation readiness approval. Runtime request,
+manifest, dry-run preview, and operator approval designs exist, while the
+runtime parser, runtime validator, manifest parser, manifest validator,
+execution planner, plan generator, approval system, approval API/database/UI,
+authentication, authorization, and runtime API handler integration remain
+missing by design.
+
+The audit also marks sandbox, artifact persistence, database persistence,
+network boundary, secrets management, threat model, resource lifecycle, and
+runtime API integration as not ready. These areas need separate docs/tests-only
+design phases before any implementation can be considered.
+
+Phase 1.6a explicitly does not implement runtime execution, parser, validator,
+planner, runner, approval system, API integration, sandbox implementation,
+artifact writer, database persistence, network boundary implementation,
+worker, queue, scheduler, GEO downloader, Snakemake wrapper, or Coze real
+client.
