@@ -375,7 +375,7 @@ write a database, or create a worker or scheduler.
 ## Phase 1.5a runtime execution design audit
 
 Phase 1.5a starts after the Phase 1.4 completion baseline. The current HEAD
-baseline is `27fe0303e790238badf488cb58fe2319c151ccfb` (`27fe030`) on branch
+baseline is `5fb0b328fb7e1d52e991c62223a15c3348b944c5` (`5fb0b32`) on branch
 `123`.
 
 The new design audit reference is
@@ -391,3 +391,28 @@ The audit explicitly keeps runtime work out of scope: no real execution runner,
 no worker / scheduler / queue, no pipeline executor, no Snakemake wrapper, no
 GEO downloader, no Coze real client, no artifact writer, and no database
 persistence.
+
+## Phase 1.5b runtime request schema design only
+
+Phase 1.5b starts from the current HEAD baseline
+`5fb0b328fb7e1d52e991c62223a15c3348b944c5` (`5fb0b32`) on branch `123`.
+
+The new schema design reference is
+`docs/phase-1-5b-runtime-request-schema-design.md`, with coverage in
+`tests/test_phase_1_5b_runtime_request_schema_design_docs.py`.
+
+Phase 1.5b is schema design only, not implementation. It documents a future
+runtime request shape with required top-level fields such as `mode`,
+`request_id`, `dataset_accession`, `analysis_type`, `output_format`,
+`execution_intent`, `operator_approval`, `input_manifest`, `sandbox`, `audit`,
+and `safety_flags`.
+
+The design keeps dry-run safety defaults: `mode` remains `dry_run`, real
+execution intent remains false, network and pipeline permissions remain false,
+operator approval remains false, artifact writing remains false, and audit
+behavior remains report-only.
+
+Phase 1.5b explicitly does not implement a runtime parser, runtime validator,
+API handler integration, real execution runner, worker, queue, scheduler,
+pipeline executor, Snakemake wrapper, GEO downloader, Coze real client,
+artifact writer, or database persistence.
