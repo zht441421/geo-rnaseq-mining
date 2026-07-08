@@ -320,3 +320,26 @@ as `REAL_EXECUTION_NOT_ALLOWED`, `NETWORK_ACCESS_NOT_ALLOWED`,
 
 The existing normal mock job submit contract is preserved: `json`, `markdown`,
 and `html` remain allowed `output_format` values, while `zip` remains rejected.
+
+## Phase 1.4f API rejection matrix hardening
+
+Phase 1.4f adds mock API rejection matrix coverage for the Phase 1.4e dry-run
+validator integration. The new references are
+`tests/test_phase_1_4f_api_rejection_matrix.py` and
+`docs/phase-1-4f-api-rejection-matrix-hardening.md`.
+
+The coverage confirms that service-layer and HTTP `/jobs` dry-run validation
+reports pass through deterministic rejection reasons for real-execution modes,
+execution permission flags, operator approval, unsupported output formats,
+unsafe dataset accessions, command-like fields, secret-like fields, artifact
+and database write intent, and worker or scheduler intent.
+
+Rejected dry-run validation reports do not return `job_id` and keep
+`execution` set to `not_started`. Accepted dry-run validation reports also
+remain `not_started`. Ordinary mock job submit remains unchanged and still
+returns `201` with a mock `job_id`.
+
+This phase does not change the dry-run validator, run GEO download, run
+RNA-seq processing, run Snakemake, call real Coze, make external network
+requests, write artifacts, write a database, create a worker or scheduler, or
+implement a real execution runner.

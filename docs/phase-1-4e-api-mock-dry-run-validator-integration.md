@@ -142,3 +142,17 @@ rejected network, pipeline, workflow, and Coze flags, rejected `zip`, unsafe
 dataset accession, deterministic validation results, existing output format
 compatibility, existing happy-path job creation, existing negative-path schema
 rejection, and a short-lived loopback HTTP validation report.
+
+## Phase 1.4f Follow-Up
+
+Phase 1.4f hardens the API rejection matrix around this integration. The
+follow-up adds service-layer and HTTP-layer tests for real-execution modes,
+execution permission flags, operator approval, unsafe dataset accessions,
+command-like fields, secret-like fields, artifact and database write intent,
+background execution intent, and multi-risk deterministic rejection reasons.
+
+Phase 1.4f does not change the dry-run validator or introduce real execution.
+Rejected dry-run validation reports still omit `job_id` and keep `execution`
+set to `not_started`. Accepted dry-run validation reports also remain
+`not_started`, while ordinary mock job submissions keep the existing `201` and
+`job_id` contract.
