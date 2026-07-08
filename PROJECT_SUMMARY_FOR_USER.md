@@ -20,12 +20,12 @@
 
 - 项目名：`geo-rnaseq-mining`
 - 当前分支：`123`
-- 当前最新确认 commit：`bd23b3f`
-- 完整 SHA：`bd23b3f514797bf50fb2f38e234fc0ef6715e5f3`
-- 最新提交说明：`Document controlled execution boundary`
+- 当前最新确认 commit：`57c0bbf`
+- 完整 SHA：`57c0bbf1d4ac35d5f2a1d059117ec12245a338cd`
+- 最新提交说明：`Document dry-run execution request contract`
 - 最新 CI 验证：Environment Solve #37
 - CI 状态：Success
-- 当前阶段：Phase 1.4b local dry-run request contract prepared
+- 当前阶段：Phase 1.4c local dry-run validation matrix prepared
 - 长期本地交接文件：`PROJECT_SUMMARY_FOR_USER.md`
 
 ## 当前项目定位
@@ -266,3 +266,20 @@ exists.
 This phase still does not download GEO data, run RNA-seq processing, run
 Snakemake, call real Coze, make external network requests, write artifacts,
 write a database, or introduce workers or schedulers.
+
+## Phase 1.4c dry-run validation / rejection matrix
+
+Phase 1.4c adds a documentation-level validation / rejection matrix for future
+dry-run execution requests. The new reference is
+`docs/phase-1-4c-dry-run-validation-rejection-matrix.md`.
+
+The matrix defines accepted dry-run-only conditions, rejected real-execution
+intents, and rejection reason codes such as `REAL_EXECUTION_NOT_ALLOWED`,
+`NETWORK_ACCESS_NOT_ALLOWED`, `SNAKEMAKE_NOT_ALLOWED`,
+`UNSAFE_DATASET_ACCESSION`, `SECRET_FIELD_NOT_ALLOWED`, and
+`BACKGROUND_EXECUTION_NOT_ALLOWED`.
+
+This phase does not implement a runtime validator and does not execute real
+tasks. Any future validator must preserve dry-run defaults, explicit opt-in,
+operator approval, output sandboxing, audit/report-only preview, and the
+documented rejection reasons.

@@ -75,6 +75,9 @@ define:
 
 These controls are future requirements. They are not implemented by Phase 1.4b.
 
+Phase 1.4c defines the dry-run validation / rejection matrix for these fields.
+Runtime validation is not implemented in Phase 1.4b or Phase 1.4c.
+
 ## Rejected Intent Examples
 
 The contract must reject or keep in dry-run any request that attempts to enable
