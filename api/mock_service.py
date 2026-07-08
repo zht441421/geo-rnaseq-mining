@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Mapping
 
+from .dry_run_validator import validate_dry_run_request
 from .job_schema import JobSubmitRequest
 from .state_machine import JobStateError, JobStatus, can_cancel, require_transition
 
@@ -60,6 +61,10 @@ class MockJobService:
         self._counter = 0
 
     def submit_job(self, payload: Mapping[str, Any]) -> dict[str, Any]:
+        if _is_dry_run_validation_request(payload):
+            validation = validate_dry_run_request(payload)
+            return _dry_run_validation_response(validation)
+
         request = JobSubmitRequest.from_mapping(payload)
         self._counter += 1
         job_id = f"mock-job-{self._counter:06d}"
@@ -160,6 +165,43 @@ class MockJobService:
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _is_dry_run_validation_request(payload: Mapping[str, Any]) -> bool:
+    if not isinstance(payload, Mapping):
+        return False
+
+    explicit_fields = {"mode", "dataset_accession", "operator_approved"}
+    for field_name in payload:
+        normalized = str(field_name).lower()
+        if normalized in explicit_fields or normalized.startswith("allow_"):
+            return True
+    return False
+
+
+def _dry_run_validation_response(validation: dict[str, Any]) -> dict[str, Any]:
+    accepted = bool(validation.get("accepted", False))
+    if accepted:
+        status = "accepted"
+        message = (
+            "Dry-run request accepted for validation only; "
+            "no real execution has started."
+        )
+    else:
+        status = "rejected"
+        message = (
+            "Dry-run request rejected by validation; "
+            "no real execution has started."
+        )
+
+    return {
+        "status": status,
+        "mode": "dry_run",
+        "validation": validation,
+        "execution": "not_started",
+        "mock": True,
+        "message": message,
+    }
 
 
 def _status_message(status: JobStatus) -> str:

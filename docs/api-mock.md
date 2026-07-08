@@ -363,4 +363,52 @@ result = service.get_job_result(job_id)
 python -m unittest tests.test_api_mock -v
 ```
 
+## Phase 1.4e Dry-Run Validation Report
+
+`MockJobService.submit_job(payload)` now recognizes dry-run execution request
+fields such as `mode`, `dataset_accession`, `operator_approved`, and `allow_*`.
+Those payloads call `validate_dry_run_request(payload)` and return a validation
+report instead of creating a mock job.
+
+Accepted dry-run validation response:
+
+```json
+{
+  "status": "accepted",
+  "mode": "dry_run",
+  "validation": {
+    "accepted": true,
+    "mode": "dry_run",
+    "rejection_reasons": [],
+    "warnings": []
+  },
+  "execution": "not_started",
+  "mock": true,
+  "message": "Dry-run request accepted for validation only; no real execution has started."
+}
+```
+
+Rejected dry-run validation response:
+
+```json
+{
+  "status": "rejected",
+  "mode": "dry_run",
+  "validation": {
+    "accepted": false,
+    "mode": "dry_run",
+    "rejection_reasons": ["REAL_EXECUTION_NOT_ALLOWED"],
+    "warnings": []
+  },
+  "execution": "not_started",
+  "mock": true,
+  "message": "Dry-run request rejected by validation; no real execution has started."
+}
+```
+
+This report is deterministic and does not allocate `job_id`. It does not run
+real GEO download, RNA-seq processing, Snakemake, real Coze calls, external
+network access, artifact writing, database writing, workers, schedulers, or a
+real execution runner.
+
 该测试只验证标准库内存 mock，不运行 Snakemake、Conda、env create、GEO/SRA 下载或任何生产任务。

@@ -85,3 +85,14 @@ before any real execution path can exist.
 Phase 1.4d is a local validation skeleton only. It converts the Phase 1.4c
 documentation matrix into a pure in-memory validation function and tests, while
 preserving the dry-run default and no-side-effect execution boundary.
+
+## Phase 1.4e Follow-Up
+
+Phase 1.4e integrates this pure validator with the mock API submit contract.
+The validator remains a side-effect-free function, and the mock API now returns
+only a validation report for dry-run execution request intent.
+
+This follow-up still does not download GEO data, run RNA-seq processing, run
+Snakemake, call real Coze, make external network requests, start a long-running
+server, write real artifacts, write a database, create a worker or scheduler,
+or implement a real execution runner.

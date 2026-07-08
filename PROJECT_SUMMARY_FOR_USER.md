@@ -299,3 +299,24 @@ This phase still does not download GEO data, run RNA-seq processing, run
 Snakemake, call real Coze, make external network requests, start a long-running
 server, write real artifacts, write a database, or introduce a queue, worker,
 or scheduler.
+
+## Phase 1.4e API mock dry-run validator integration
+
+Phase 1.4e connects `api.dry_run_validator.validate_dry_run_request` to the
+existing mock API submit contract. Dry-run execution request payloads now return
+a deterministic validation report with `status`, `mode`, `validation`,
+`execution`, `mock`, and `message`.
+
+An accepted dry-run validation report means only that the request shape passed
+the mock validator. It does not mean real GEO download, RNA-seq processing,
+Snakemake, real Coze calls, external network access, artifact writing,
+database writing, worker creation, scheduler creation, or real execution has
+started.
+
+Rejected dry-run validation reports return deterministic rejection reasons such
+as `REAL_EXECUTION_NOT_ALLOWED`, `NETWORK_ACCESS_NOT_ALLOWED`,
+`SNAKEMAKE_NOT_ALLOWED`, `REAL_COZE_CALL_NOT_ALLOWED`,
+`UNSUPPORTED_OUTPUT_FORMAT`, and `UNSAFE_DATASET_ACCESSION`.
+
+The existing normal mock job submit contract is preserved: `json`, `markdown`,
+and `html` remain allowed `output_format` values, while `zip` remains rejected.

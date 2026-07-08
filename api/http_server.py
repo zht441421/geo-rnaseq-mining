@@ -101,7 +101,11 @@ def make_handler(service: MockJobService | None = None) -> type[BaseHTTPRequestH
             self, call: Any, success_status: int = 200
         ) -> None:
             try:
-                self._send_json(success_status, call())
+                response = call()
+                self._send_json(
+                    _success_status_for_response(response, success_status),
+                    response,
+                )
             except SchemaValidationError as exc:
                 self._send_schema_error(exc)
             except JobNotFoundError as exc:
@@ -247,6 +251,14 @@ def _path_parts(raw_path: str) -> list[str]:
     if not clean_path:
         return []
     return [part for part in clean_path.split("/") if part]
+
+
+def _success_status_for_response(
+    response: dict[str, Any], default_status: int
+) -> int:
+    if response.get("mode") == "dry_run" and "validation" in response:
+        return 200
+    return default_status
 
 
 if __name__ == "__main__":

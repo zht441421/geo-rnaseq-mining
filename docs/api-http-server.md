@@ -283,6 +283,39 @@ Implemented error cases:
 `POST /jobs` requires `Content-Type: application/json`. Missing or non-JSON
 content types return `415` with `UNSUPPORTED_MEDIA_TYPE`.
 
+## Phase 1.4e Dry-Run Validation Reports
+
+`POST /jobs` also accepts dry-run execution request intent for validation
+only. Payloads with fields such as `mode`, `dataset_accession`,
+`operator_approved`, or `allow_*` are passed to
+`validate_dry_run_request(payload)` by the mock service.
+
+Dry-run validation reports return `200` because no job is created:
+
+```json
+{
+  "status": "accepted",
+  "mode": "dry_run",
+  "validation": {
+    "accepted": true,
+    "mode": "dry_run",
+    "rejection_reasons": [],
+    "warnings": []
+  },
+  "execution": "not_started",
+  "mock": true,
+  "message": "Dry-run request accepted for validation only; no real execution has started."
+}
+```
+
+Rejected dry-run validation reports keep the same shape with
+`status: "rejected"` and deterministic `validation.rejection_reasons`.
+
+This path does not allocate `job_id`, start a worker, run Snakemake, run
+RNA-seq processing, download GEO data, call real Coze, access external
+network services, write artifacts, write a database, or implement a real
+execution runner.
+
 ## Safety Boundaries
 
 The HTTP server preserves the Phase 1 mock boundaries:
