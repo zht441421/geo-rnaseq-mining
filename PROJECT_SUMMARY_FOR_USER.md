@@ -1,6 +1,6 @@
 # geo-rnaseq-mining 项目交接摘要
 
-更新时间：2026-07-07（Asia/Shanghai）
+更新时间：2026-07-08（Asia/Shanghai）
 
 本文件用于快速交接当前项目状态。它总结当前 Git 基线、Phase 1.3a 到 Phase 1.3e 的完成情况、已验证内容、仍然禁止或未支持的边界，以及建议下一步。当前文件是项目交接摘要，不代表生产分析已经可运行。
 
@@ -20,12 +20,12 @@
 
 - 项目名：`geo-rnaseq-mining`
 - 当前分支：`123`
-- 当前最新确认 commit：`9b2292f`
-- 完整 SHA：`9b2292fdd7b1c92999d532ece595e57ae92294e5`
-- 最新提交说明：`Harden local API operator handoff docs`
+- 当前最新确认 commit：`b538ec1`
+- 完整 SHA：`b538ec18d009904d94c16f6c05b3b2faa348d72a`
+- 最新提交说明：`Add project handoff summary`
 - 最新 CI 验证：Environment Solve #37
 - CI 状态：Success
-- 当前阶段：Phase 1.3a 到 Phase 1.3e complete
+- 当前阶段：Phase 1.4a local boundary contract prepared
 - 长期本地交接文件：`PROJECT_SUMMARY_FOR_USER.md`
 
 ## 当前项目定位
@@ -234,3 +234,19 @@ OK
 ## 最终判断
 
 Phase 1.3a 到 Phase 1.3e 已经完成了 API mock 面向 Coze 接入前最重要的契约稳定工作。当前最有价值的下一步不是运行真实数据，而是决定是否继续做最终 audit，或进入 Phase 1.4 的受控后端执行设计。
+
+## Phase 1.4a controlled execution boundary
+
+Phase 1.4a adds a local boundary contract for future controlled execution
+design. The new reference is
+`docs/phase-1-4-controlled-execution-boundary.md`.
+
+This is still a mock / contract / placeholder phase. It does not run real GEO
+download, RNA-seq processing, Snakemake, real Coze calls, external network
+calls, production workers, schedulers, persistent registries, databases, or
+real analysis artifacts.
+
+Future real execution must first define explicit opt-in, dry-run mode, safe
+input validation, output sandboxing, no secrets in repo, no background execution
+by default, no automatic network calls, an operator checklist, and
+audit/report-only behavior.
