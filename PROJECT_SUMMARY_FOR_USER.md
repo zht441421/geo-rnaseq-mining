@@ -20,12 +20,12 @@
 
 - 项目名：`geo-rnaseq-mining`
 - 当前分支：`123`
-- 当前最新确认 commit：`50227fb`
-- 完整 SHA：`50227fb2c54612fe26db984e7eb6bce74cdcf921`
-- 最新提交说明：`Document input manifest schema design`
+- 当前最新确认 commit：`3c42f26`
+- 完整 SHA：`3c42f268b80d782b5a08eb1f44bc12515f6f88df`
+- 最新提交说明：`Document dry-run execution plan preview design`
 - 最新 CI 验证：Environment Solve #37
 - CI 状态：Success
-- 当前阶段：Phase 1.5d dry-run execution plan preview design prepared
+- 当前阶段：Phase 1.5e manifest validation rules docs/tests prepared
 - 长期本地交接文件：`PROJECT_SUMMARY_FOR_USER.md`
 
 ## 当前项目定位
@@ -469,3 +469,30 @@ plan generator, runtime parser, manifest parser, manifest validator, API
 handler integration, runtime execution runner, worker, queue, scheduler,
 pipeline executor, Snakemake wrapper, GEO downloader, Coze real client,
 artifact writer, or database persistence.
+
+## Phase 1.5e manifest validation rules docs/tests only
+
+Phase 1.5e starts from the current HEAD baseline
+`3c42f268b80d782b5a08eb1f44bc12515f6f88df` (`3c42f26`) on branch `123`.
+
+The new validation rules design reference is
+`docs/phase-1-5e-manifest-validation-rules-design.md`, with coverage in
+`tests/test_phase_1_5e_manifest_validation_rules_design_docs.py`.
+
+Phase 1.5e is manifest validation rules docs/tests only, not implementation.
+It documents future rule categories and rejection reasons for required
+manifest sections, identifier safety, dataset placeholders, metadata-only
+samples, documentation-only analysis, placeholder-only inputs, report-only
+outputs, provenance, safety flags, audit behavior, deterministic rejection
+behavior, and accepted-for-preview-only outcomes.
+
+The design keeps validation dry-run-only: accepted manifests are accepted for
+preview only, rejected manifests stay `not_started`, artifacts are not created,
+network is not performed, databases are not written, and operator-visible
+report-only behavior remains required.
+
+Phase 1.5e explicitly does not implement a manifest validator, manifest parser,
+runtime validator, JSON schema file, Pydantic model, API handler integration,
+execution planner, plan generator, runtime execution runner, worker, queue,
+scheduler, pipeline executor, Snakemake wrapper, GEO downloader, Coze real
+client, artifact writer, or database persistence.
