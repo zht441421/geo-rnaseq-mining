@@ -20,12 +20,12 @@
 
 - 项目名：`geo-rnaseq-mining`
 - 当前分支：`123`
-- 当前最新确认 commit：`57c0bbf`
-- 完整 SHA：`57c0bbf1d4ac35d5f2a1d059117ec12245a338cd`
-- 最新提交说明：`Document dry-run execution request contract`
+- 当前最新确认 commit：`244043e`
+- 完整 SHA：`244043eb52e08614719d99cb338c40792ffd5c63`
+- 最新提交说明：`Document runtime request schema design`
 - 最新 CI 验证：Environment Solve #37
 - CI 状态：Success
-- 当前阶段：Phase 1.4c local dry-run validation matrix prepared
+- 当前阶段：Phase 1.5c input manifest schema design docs/tests prepared
 - 长期本地交接文件：`PROJECT_SUMMARY_FOR_USER.md`
 
 ## 当前项目定位
@@ -395,7 +395,7 @@ persistence.
 ## Phase 1.5b runtime request schema design only
 
 Phase 1.5b starts from the current HEAD baseline
-`5fb0b328fb7e1d52e991c62223a15c3348b944c5` (`5fb0b32`) on branch `123`.
+`244043eb52e08614719d99cb338c40792ffd5c63` (`244043e`) on branch `123`.
 
 The new schema design reference is
 `docs/phase-1-5b-runtime-request-schema-design.md`, with coverage in
@@ -416,3 +416,28 @@ Phase 1.5b explicitly does not implement a runtime parser, runtime validator,
 API handler integration, real execution runner, worker, queue, scheduler,
 pipeline executor, Snakemake wrapper, GEO downloader, Coze real client,
 artifact writer, or database persistence.
+
+## Phase 1.5c input manifest schema design docs/tests only
+
+Phase 1.5c starts from the current HEAD baseline
+`244043eb52e08614719d99cb338c40792ffd5c63` (`244043e`) on branch `123`.
+
+The new manifest schema design reference is
+`docs/phase-1-5c-input-manifest-schema-design.md`, with coverage in
+`tests/test_phase_1_5c_input_manifest_schema_design_docs.py`.
+
+Phase 1.5c is manifest schema docs/tests only, not implementation. It documents
+a future input manifest shape with required top-level fields such as
+`manifest_id`, `manifest_version`, `dataset`, `samples`, `analysis`, `inputs`,
+`outputs`, `provenance`, `safety`, and `audit`.
+
+The design keeps the manifest metadata-only and report-only: dataset accessions
+remain accession-like placeholders, samples do not require real FASTQ / BAM /
+count matrix paths, analysis remains `rnaseq_placeholder`, outputs keep
+`output_format` limited to `json`, `markdown`, and `html`, `write_artifacts`
+remains false, and `report_only` remains true.
+
+Phase 1.5c explicitly does not implement a manifest parser, manifest validator,
+JSON schema file, Pydantic model, API handler integration, runtime execution
+runner, worker, queue, scheduler, pipeline executor, Snakemake wrapper, GEO
+downloader, Coze real client, artifact writer, or database persistence.
