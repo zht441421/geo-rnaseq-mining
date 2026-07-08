@@ -20,12 +20,12 @@
 
 - 项目名：`geo-rnaseq-mining`
 - 当前分支：`123`
-- 当前最新确认 commit：`3c42f26`
-- 完整 SHA：`3c42f268b80d782b5a08eb1f44bc12515f6f88df`
-- 最新提交说明：`Document dry-run execution plan preview design`
+- 当前最新确认 commit：`b530098`
+- 完整 SHA：`b530098e7d5343b7a4e80274bdba5655881a4826`
+- 最新提交说明：`Document manifest validation rules design`
 - 最新 CI 验证：Environment Solve #37
 - CI 状态：Success
-- 当前阶段：Phase 1.5e manifest validation rules docs/tests prepared
+- 当前阶段：Phase 1.5f operator approval record design prepared
 - 长期本地交接文件：`PROJECT_SUMMARY_FOR_USER.md`
 
 ## 当前项目定位
@@ -496,3 +496,31 @@ runtime validator, JSON schema file, Pydantic model, API handler integration,
 execution planner, plan generator, runtime execution runner, worker, queue,
 scheduler, pipeline executor, Snakemake wrapper, GEO downloader, Coze real
 client, artifact writer, or database persistence.
+
+## Phase 1.5f operator approval record design only
+
+Phase 1.5f starts from the current HEAD baseline
+`b530098e7d5343b7a4e80274bdba5655881a4826` (`b530098`) on branch `123`.
+
+The new approval record design reference is
+`docs/phase-1-5f-operator-approval-record-design.md`, with coverage in
+`tests/test_phase_1_5f_operator_approval_record_design_docs.py`.
+
+Phase 1.5f is operator approval record design only, not implementation. It
+documents future approval record fields, non-executing decision values,
+approved and denied scopes, safety override rules, audit requirements,
+revocation and expiration placeholders, automatic escalation prevention,
+forbidden content, accepted-for-future-review-only conditions, and safe
+approval outcome examples.
+
+The design keeps approval report-only and fail-closed: approval records do not
+trigger execution, do not override dry-run safety flags, do not grant network
+or pipeline permissions, do not grant artifact/database writes, and do not
+start worker, queue, or scheduler work.
+
+Phase 1.5f explicitly does not implement an approval system, approval API,
+approval database, approval UI, authentication, authorization, runtime
+validator, manifest validator, JSON schema file, Pydantic model, API handler
+integration, execution planner, plan generator, runtime execution runner,
+worker, queue, scheduler, pipeline executor, Snakemake wrapper, GEO downloader,
+Coze real client, artifact writer, or database persistence.
