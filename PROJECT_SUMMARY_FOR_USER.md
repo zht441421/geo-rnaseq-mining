@@ -20,12 +20,12 @@
 
 - 项目名：`geo-rnaseq-mining`
 - 当前分支：`123`
-- 当前最新确认 commit：`b538ec1`
-- 完整 SHA：`b538ec18d009904d94c16f6c05b3b2faa348d72a`
-- 最新提交说明：`Add project handoff summary`
+- 当前最新确认 commit：`bd23b3f`
+- 完整 SHA：`bd23b3f514797bf50fb2f38e234fc0ef6715e5f3`
+- 最新提交说明：`Document controlled execution boundary`
 - 最新 CI 验证：Environment Solve #37
 - CI 状态：Success
-- 当前阶段：Phase 1.4a local boundary contract prepared
+- 当前阶段：Phase 1.4b local dry-run request contract prepared
 - 长期本地交接文件：`PROJECT_SUMMARY_FOR_USER.md`
 
 ## 当前项目定位
@@ -250,3 +250,19 @@ Future real execution must first define explicit opt-in, dry-run mode, safe
 input validation, output sandboxing, no secrets in repo, no background execution
 by default, no automatic network calls, an operator checklist, and
 audit/report-only behavior.
+
+## Phase 1.4b dry-run execution request contract
+
+Phase 1.4b adds a documentation-only dry-run request contract for future
+controlled execution requests. The new reference is
+`docs/phase-1-4b-dry-run-execution-request-contract.md`.
+
+The default request mode remains `dry_run`. Real execution is forbidden by
+default. A future request must keep `allow_network`, `allow_pipeline_execution`,
+`allow_snakemake`, and `allow_real_coze_call` set to `false`, and
+`operator_approved` remains `false` until a later operator approval design
+exists.
+
+This phase still does not download GEO data, run RNA-seq processing, run
+Snakemake, call real Coze, make external network requests, write artifacts,
+write a database, or introduce workers or schedulers.
