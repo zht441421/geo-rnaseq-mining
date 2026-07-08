@@ -343,3 +343,31 @@ This phase does not change the dry-run validator, run GEO download, run
 RNA-seq processing, run Snakemake, call real Coze, make external network
 requests, write artifacts, write a database, create a worker or scheduler, or
 implement a real execution runner.
+
+## Phase 1.4g completion baseline / operator handoff
+
+Phase 1.4g records the completion baseline for Phase 1.4a through Phase 1.4f
+and adds an operator handoff for the next decision point. The current baseline
+commit is `e2ffee42e6bf72e4a3e1a72445a357ed19924ad1` (`e2ffee4`) on branch
+`123`.
+
+The new baseline reference is
+`docs/phase-1-4-completion-baseline.md`, with coverage in
+`tests/test_phase_1_4_completion_baseline_docs.py`.
+
+The baseline summarizes the completed chain:
+controlled execution boundary -> dry-run execution request contract ->
+validation / rejection matrix -> pure dry-run validator skeleton -> API mock
+integration -> API rejection matrix hardening.
+
+The operator handoff lists safe tests, tests that must not be added without
+review, safety-boundary violation signals, and controls required before any
+future real runtime execution: explicit opt-in, operator approval, validated
+input manifest, output sandbox, audit/report-only preview, no automatic
+network calls, controlled runner / worker design, persistence boundary design,
+and secrets management outside repo.
+
+Phase 1.4g is docs and documentation tests only. It still does not implement a
+real execution runner, run GEO download, run RNA-seq processing, run
+Snakemake, call real Coze, make external network requests, write artifacts,
+write a database, or create a worker or scheduler.
