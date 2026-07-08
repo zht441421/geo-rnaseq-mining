@@ -1,31 +1,32 @@
 # geo-rnaseq-mining 项目交接摘要
 
-更新时间：2026-07-08（Asia/Shanghai）
+更新时间：2026-07-09（Asia/Shanghai）
 
-本文件用于快速交接当前项目状态。它总结当前 Git 基线、Phase 1.3a 到 Phase 1.3e 的完成情况、已验证内容、仍然禁止或未支持的边界，以及建议下一步。当前文件是项目交接摘要，不代表生产分析已经可运行。
+本文件用于快速交接当前项目状态。它总结当前 Git 基线、Phase 1.3a 到 Phase 1.5g 的完成情况、已验证内容、仍然禁止或未支持的边界，以及建议下一步。当前文件是项目交接摘要，不代表生产分析已经可运行。
 
 ## 一句话结论
 
-`geo-rnaseq-mining` 已从早期 Snakemake / Conda 环境验证，推进到产品化 Phase 1 的本地 API mock 契约阶段。当前已经完成 API mock 的输出格式对齐、负向错误契约、成功响应契约、Coze-facing 示例、local operator checklist 和 Coze handoff 文档加固。
+`geo-rnaseq-mining` 已从早期 Snakemake / Conda 环境验证，推进到产品化 Phase 1 的本地 API mock 契约阶段，并完成 Phase 1.5 design-only completion baseline / operator handoff。当前已经完成 API mock 的输出格式对齐、负向错误契约、成功响应契约、Coze-facing 示例、local operator checklist、Coze handoff 文档加固，以及 Phase 1.5a 到 Phase 1.5f 的设计文档链路。
 
-项目目前仍处于 mock / contract 阶段：
+项目目前仍处于 mock / contract / design-only baseline 阶段：
 
 - 未接入真实 Coze。
 - 未运行真实 RNA-seq pipeline。
 - 未生成真实 Markdown / HTML 报告。
 - 未访问真实 GEO / SRA 数据。
 - 未运行生产 Snakemake jobs。
+- 未实现 runtime execution / parser / validator / planner / runner / approval system / API integration。
 
 ## 当前 Git 与验证基线
 
 - 项目名：`geo-rnaseq-mining`
 - 当前分支：`123`
-- 当前最新确认 commit：`b530098`
-- 完整 SHA：`b530098e7d5343b7a4e80274bdba5655881a4826`
-- 最新提交说明：`Document manifest validation rules design`
+- 当前 HEAD baseline：`19d6965`
+- 完整 SHA：`19d6965fb2fcdcadcdc2614eaddda75b546d15c0`
+- 最新提交说明：`Document operator approval record design`
 - 最新 CI 验证：Environment Solve #37
 - CI 状态：Success
-- 当前阶段：Phase 1.5f operator approval record design prepared
+- 当前阶段：Phase 1.5g completion baseline / operator handoff（design-only）
 - 长期本地交接文件：`PROJECT_SUMMARY_FOR_USER.md`
 
 ## 当前项目定位
@@ -524,3 +525,32 @@ validator, manifest validator, JSON schema file, Pydantic model, API handler
 integration, execution planner, plan generator, runtime execution runner,
 worker, queue, scheduler, pipeline executor, Snakemake wrapper, GEO downloader,
 Coze real client, artifact writer, or database persistence.
+
+## Phase 1.5g completion baseline / operator handoff
+
+Phase 1.5g starts from the current HEAD baseline
+`19d6965fb2fcdcadcdc2614eaddda75b546d15c0` (`19d6965`) on branch `123`.
+
+The new completion baseline reference is
+`docs/phase-1-5-completion-baseline.md`, with coverage in
+`tests/test_phase_1_5_completion_baseline_docs.py`.
+
+Phase 1.5g records Phase 1.5 as a design-only completion baseline and operator
+handoff. Phase 1.5a through Phase 1.5f are complete as design records:
+runtime execution design audit, runtime request schema design, input manifest
+schema design, dry-run execution plan preview design, manifest validation
+rules design, and operator approval record design.
+
+The baseline remains documentation and documentation tests only. It still does
+not implement runtime execution, runtime parser, runtime validator, manifest
+parser, manifest validator, execution planner, plan generator, real execution
+runner, approval system, approval API, approval database, approval UI,
+authentication, authorization, API handler integration, worker, queue,
+scheduler, GEO downloader, Snakemake wrapper, Coze real client, artifact
+writer, or database persistence.
+
+Recommended next phases remain design-only or documentation-test-only, such as
+Phase 1.6a runtime implementation readiness audit docs/tests only, sandbox
+boundary design docs/tests only, artifact persistence boundary design
+docs/tests only, or network boundary design docs/tests only. Do not directly
+enter real execution implementation.
