@@ -371,3 +371,23 @@ Phase 1.4g is docs and documentation tests only. It still does not implement a
 real execution runner, run GEO download, run RNA-seq processing, run
 Snakemake, call real Coze, make external network requests, write artifacts,
 write a database, or create a worker or scheduler.
+
+## Phase 1.5a runtime execution design audit
+
+Phase 1.5a starts after the Phase 1.4 completion baseline. The current HEAD
+baseline is `27fe0303e790238badf488cb58fe2319c151ccfb` (`27fe030`) on branch
+`123`.
+
+The new design audit reference is
+`docs/phase-1-5a-runtime-execution-design-audit.md`, with coverage in
+`tests/test_phase_1_5a_runtime_execution_design_audit_docs.py`.
+
+Phase 1.5a is design audit only, not implementation. It documents required
+preconditions, runtime execution boundary layers, forbidden default behavior,
+failure protections, interface design questions, and safe next phase options
+before any controlled runtime execution can be proposed.
+
+The audit explicitly keeps runtime work out of scope: no real execution runner,
+no worker / scheduler / queue, no pipeline executor, no Snakemake wrapper, no
+GEO downloader, no Coze real client, no artifact writer, and no database
+persistence.
