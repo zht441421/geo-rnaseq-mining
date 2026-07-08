@@ -20,12 +20,12 @@
 
 - 项目名：`geo-rnaseq-mining`
 - 当前分支：`123`
-- 当前最新确认 commit：`244043e`
-- 完整 SHA：`244043eb52e08614719d99cb338c40792ffd5c63`
-- 最新提交说明：`Document runtime request schema design`
+- 当前最新确认 commit：`50227fb`
+- 完整 SHA：`50227fb2c54612fe26db984e7eb6bce74cdcf921`
+- 最新提交说明：`Document input manifest schema design`
 - 最新 CI 验证：Environment Solve #37
 - CI 状态：Success
-- 当前阶段：Phase 1.5c input manifest schema design docs/tests prepared
+- 当前阶段：Phase 1.5d dry-run execution plan preview design prepared
 - 长期本地交接文件：`PROJECT_SUMMARY_FOR_USER.md`
 
 ## 当前项目定位
@@ -441,3 +441,31 @@ Phase 1.5c explicitly does not implement a manifest parser, manifest validator,
 JSON schema file, Pydantic model, API handler integration, runtime execution
 runner, worker, queue, scheduler, pipeline executor, Snakemake wrapper, GEO
 downloader, Coze real client, artifact writer, or database persistence.
+
+## Phase 1.5d dry-run execution plan preview design only
+
+Phase 1.5d starts from the current HEAD baseline
+`50227fb2c54612fe26db984e7eb6bce74cdcf921` (`50227fb`) on branch `123`.
+
+The new preview design reference is
+`docs/phase-1-5d-dry-run-execution-plan-preview-design.md`, with coverage in
+`tests/test_phase_1_5d_dry_run_execution_plan_preview_design_docs.py`.
+
+Phase 1.5d is dry-run execution plan preview design only, not implementation.
+It documents a future operator-visible preview shape with required top-level
+fields such as `preview_id`, `request_id`, `manifest_id`, `mode`, `status`,
+`plan_summary`, `planned_steps`, `blocked_actions`, `safety_assessment`,
+`operator_review`, `sandbox_preview`, `audit_report`, and
+`next_allowed_actions`.
+
+The design keeps preview behavior dry-run-only: `mode` remains `dry_run`,
+`status` is limited to `preview_only`, `blocked`, or `rejected`, planned steps
+are descriptive only, blocked actions list real execution attempts that were
+not performed, sandbox information remains a placeholder, and audit behavior
+remains report-only.
+
+Phase 1.5d explicitly does not implement an execution planner, runtime planner,
+plan generator, runtime parser, manifest parser, manifest validator, API
+handler integration, runtime execution runner, worker, queue, scheduler,
+pipeline executor, Snakemake wrapper, GEO downloader, Coze real client,
+artifact writer, or database persistence.
