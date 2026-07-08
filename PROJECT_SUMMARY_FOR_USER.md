@@ -2,11 +2,11 @@
 
 更新时间：2026-07-09（Asia/Shanghai）
 
-本文件用于快速交接当前项目状态。它总结当前 Git 基线、Phase 1.3a 到 Phase 1.6a 的完成情况、已验证内容、仍然禁止或未支持的边界，以及建议下一步。当前文件是项目交接摘要，不代表生产分析已经可运行。
+本文件用于快速交接当前项目状态。它总结当前 Git 基线、Phase 1.3a 到 Phase 1.6b 的完成情况、已验证内容、仍然禁止或未支持的边界，以及建议下一步。当前文件是项目交接摘要，不代表生产分析已经可运行。
 
 ## 一句话结论
 
-`geo-rnaseq-mining` 已从早期 Snakemake / Conda 环境验证，推进到产品化 Phase 1 的本地 API mock 契约阶段，并完成 Phase 1.5 design-only completion baseline / operator handoff 和 Phase 1.6a runtime implementation readiness audit。当前已经完成 API mock 的输出格式对齐、负向错误契约、成功响应契约、Coze-facing 示例、local operator checklist、Coze handoff 文档加固，以及 Phase 1.5a 到 Phase 1.5f 的设计文档链路。
+`geo-rnaseq-mining` 已从早期 Snakemake / Conda 环境验证，推进到产品化 Phase 1 的本地 API mock 契约阶段，并完成 Phase 1.5 design-only completion baseline / operator handoff、Phase 1.6a runtime implementation readiness audit 和 Phase 1.6b sandbox boundary design。当前已经完成 API mock 的输出格式对齐、负向错误契约、成功响应契约、Coze-facing 示例、local operator checklist、Coze handoff 文档加固，以及 Phase 1.5a 到 Phase 1.5f 的设计文档链路。
 
 项目目前仍处于 mock / contract / design-only baseline / readiness-audit 阶段：
 
@@ -15,18 +15,18 @@
 - 未生成真实 Markdown / HTML 报告。
 - 未访问真实 GEO / SRA 数据。
 - 未运行生产 Snakemake jobs。
-- 未实现 runtime execution / parser / validator / planner / runner / approval system / API integration / sandbox / artifact/database/network boundary。
+- 未实现 runtime execution / parser / validator / planner / runner / approval system / API integration / sandbox implementation / sandbox directory creation / artifact writer / artifact/database/network boundary。
 
 ## 当前 Git 与验证基线
 
 - 项目名：`geo-rnaseq-mining`
 - 当前分支：`123`
-- 当前 HEAD baseline：`282fe0f`
-- 完整 SHA：`282fe0f132d1ce08f5200bf402f1e3392a220e90`
-- 最新提交说明：`Add Phase 1.5 completion baseline`
+- 当前 HEAD baseline：`4814bef`
+- 完整 SHA：`4814bef608d2cc89d04a3f53c3c06025ecbc317a`
+- 最新提交说明：`Document runtime implementation readiness audit`
 - 最新 CI 验证：Environment Solve #37
 - CI 状态：Success
-- 当前阶段：Phase 1.6a runtime implementation readiness audit（docs/tests only）
+- 当前阶段：Phase 1.6b sandbox boundary design（docs/tests only）
 - 长期本地交接文件：`PROJECT_SUMMARY_FOR_USER.md`
 
 ## 当前项目定位
@@ -584,5 +584,40 @@ design phases before any implementation can be considered.
 Phase 1.6a explicitly does not implement runtime execution, parser, validator,
 planner, runner, approval system, API integration, sandbox implementation,
 artifact writer, database persistence, network boundary implementation,
+worker, queue, scheduler, GEO downloader, Snakemake wrapper, or Coze real
+client.
+
+## Phase 1.6b sandbox boundary design docs/tests only
+
+Phase 1.6b starts from the current HEAD baseline
+`4814bef608d2cc89d04a3f53c3c06025ecbc317a` (`4814bef`) on branch `123`.
+
+The new sandbox boundary design reference is
+`docs/phase-1-6b-sandbox-boundary-design.md`, with coverage in
+`tests/test_phase_1_6b_sandbox_boundary_design_docs.py`.
+
+Phase 1.6b is sandbox boundary design docs/tests only. It does not approve or
+implement sandbox code, sandbox directory creation, filesystem writes,
+artifact writing, database persistence, network boundary implementation,
+runtime execution, API integration, or worker / queue / scheduler behavior.
+
+The conclusion is: not ready for sandbox implementation. Sandbox path policy,
+path normalization/enforcement, artifact write boundary, cleanup policy,
+rollback policy, and audit policy remain design-only gaps. Runtime execution,
+artifact writing, database side effects, network side effects, and worker
+side effects remain not approved.
+
+The design records fail-closed sandbox principles, future sandbox_id rules,
+trusted-operator sandbox root policy, future path normalization and
+inside-root enforcement, artifact write preconditions, cleanup / rollback /
+audit requirements, a report-only sandbox preview schema, explicit no-go
+decisions, and safe Phase 1.6c docs/tests-only next options.
+
+Phase 1.6b explicitly does not create a real sandbox directory, write real
+artifacts, write a database, run a pipeline, run Snakemake, download GEO data,
+call real Coze, perform external network access, start a long-running server,
+or implement sandbox implementation, artifact writer, runtime execution,
+runtime parser, runtime validator, manifest parser, manifest validator,
+execution planner, plan generator, approval system, API handler integration,
 worker, queue, scheduler, GEO downloader, Snakemake wrapper, or Coze real
 client.
