@@ -283,3 +283,19 @@ This phase does not implement a runtime validator and does not execute real
 tasks. Any future validator must preserve dry-run defaults, explicit opt-in,
 operator approval, output sandboxing, audit/report-only preview, and the
 documented rejection reasons.
+
+## Phase 1.4d dry-run validator skeleton
+
+Phase 1.4d adds a minimal pure-function validator skeleton for dry-run
+execution request intent. The new references are `api/dry_run_validator.py`,
+`docs/phase-1-4d-dry-run-validator-skeleton.md`, and
+`tests/test_phase_1_4d_dry_run_validator.py`.
+
+The validator returns `accepted`, `mode`, `rejection_reasons`, and `warnings`.
+It keeps the effective mode at `dry_run`, rejects real-execution intent, and
+uses the Phase 1.4c rejection reason codes.
+
+This phase still does not download GEO data, run RNA-seq processing, run
+Snakemake, call real Coze, make external network requests, start a long-running
+server, write real artifacts, write a database, or introduce a queue, worker,
+or scheduler.

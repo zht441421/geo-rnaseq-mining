@@ -127,7 +127,11 @@ Expected reason: `SECRET_FIELD_NOT_ALLOWED`.
 ## Current Decision
 
 Phase 1.4c defines the accepted and rejected request matrix. Runtime validation
-is not implemented in this phase. Any future runtime validator must preserve
-the dry-run default, explicit opt-in requirement, rejection reasons, operator
-approval boundary, output sandbox boundary, and audit/report-only preview
-before real execution is considered.
+is not implemented in this phase. Phase 1.4d may implement a pure in-memory
+validator skeleton from this matrix, but it must not create an endpoint,
+worker, scheduler, queue, database, artifact writer, Snakemake runner, Coze
+caller, network caller, or pipeline adapter.
+
+Any future runtime validator must preserve the dry-run default, explicit opt-in
+requirement, rejection reasons, operator approval boundary, output sandbox
+boundary, and audit/report-only preview before real execution is considered.
