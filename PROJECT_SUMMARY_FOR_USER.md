@@ -680,3 +680,26 @@ Phase 1.6d does not implement a validator runtime, artifact writer,
 persistence layer, registry, database, storage backend, sandbox, filesystem
 inspection, path resolver, API integration, worker / queue / scheduler,
 network request, GEO downloader, Snakemake wrapper, or real Coze client.
+
+## Phase 1.7 Cross-Boundary Security Threat Model docs/tests only
+
+Phase 1.7 starts from HEAD baseline
+`364c9ee1de98f49daa3cb99bc7e0260b0282c842` (`364c9ee`) on branch `123`.
+
+The threat-model design reference is
+`docs/phase-1-7-cross-boundary-security-threat-model.md`, with documentation-
+only coverage in
+`tests/test_phase_1_7_cross_boundary_security_threat_model_docs.py`.
+
+Phase 1.7 documents assets, actors, trust boundaries, STRIDE categories,
+specific cross-boundary threats, existing design controls, remaining risks,
+future prerequisites, a control-mapping matrix, and a report-only threat
+assessment schema design. Design controls are not actually enforced controls,
+and the threat model does not authorize implementation.
+
+The single recommended next topic is Phase 1.8 secrets management and
+redaction boundary design docs/tests only. Phase 1.7 does not implement runtime
+security enforcement, authentication or authorization, secrets management,
+database/storage, network controls, sandboxing, artifact persistence, audit
+storage, API integration, workers, GEO download, Snakemake execution, or Coze
+integration.
