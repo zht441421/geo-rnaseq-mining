@@ -659,3 +659,24 @@ network boundary implementation, runtime execution, runtime parser, runtime
 validator, manifest parser, manifest validator, execution planner, plan
 generator, approval system, API handler integration, worker, queue, scheduler,
 GEO downloader, Snakemake wrapper, or Coze real client.
+
+## Phase 1.6d artifact validation rules docs/tests only
+
+Phase 1.6d starts from HEAD baseline
+`493d891252a1205acb20c94b05ee8b63e1ae6991` (`493d891`) on branch `123`.
+
+The artifact validation rules design reference is
+`docs/phase-1-6d-artifact-validation-rules.md`, with documentation-only
+coverage in `tests/test_phase_1_6d_artifact_validation_rules_docs.py`.
+
+Phase 1.6d defines future fail-closed artifact type, filename, format,
+metadata, size, sandbox/path, overwrite, audit, redaction, and rejection-code
+rules. Validation remains report-only until future runtime approval.
+Validation success does not authorize write or execution, and an approval
+record cannot bypass validation.
+
+The conclusion is: not ready for artifact validator runtime implementation.
+Phase 1.6d does not implement a validator runtime, artifact writer,
+persistence layer, registry, database, storage backend, sandbox, filesystem
+inspection, path resolver, API integration, worker / queue / scheduler,
+network request, GEO downloader, Snakemake wrapper, or real Coze client.
