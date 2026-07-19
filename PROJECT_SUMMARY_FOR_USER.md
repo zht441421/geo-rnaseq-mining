@@ -703,3 +703,24 @@ security enforcement, authentication or authorization, secrets management,
 database/storage, network controls, sandboxing, artifact persistence, audit
 storage, API integration, workers, GEO download, Snakemake execution, or Coze
 integration.
+
+## Phase 1.8 Secrets Management and Redaction Boundary Design docs/tests only
+
+Phase 1.8 starts from HEAD baseline
+`5a5ae6e20b93df32ee7d6ea18ba660c86b4f0539` (`5a5ae6e`) on branch `123`.
+
+The design reference is
+`docs/phase-1-8-secrets-management-redaction-boundary.md`, with documentation-
+only coverage in
+`tests/test_phase_1_8_secrets_management_redaction_boundary_docs.py`.
+
+Phase 1.8 documents secret classification, credential and trust boundaries,
+the source-to-discard lifecycle, redaction rules, least-privilege concepts,
+leakage threat mapping, rejection-code vocabulary, and a report-only assessment
+schema. Validation does not access secret, approval does not authorize secret
+disclosure, and design controls do not equal enforced controls.
+
+Secrets implementation remains not approved. Phase 1.8 does not create a
+secret system, loader, provider, storage, cache, runtime redactor, log
+interceptor, artifact scanner, audit persistence, network client, API handler,
+authentication/authorization implementation, or worker credential delegation.
