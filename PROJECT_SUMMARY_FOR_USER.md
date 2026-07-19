@@ -724,3 +724,31 @@ Secrets implementation remains not approved. Phase 1.8 does not create a
 secret system, loader, provider, storage, cache, runtime redactor, log
 interceptor, artifact scanner, audit persistence, network client, API handler,
 authentication/authorization implementation, or worker credential delegation.
+
+## Phase 1.9 Task Lifecycle and State Machine Boundary Design docs/tests only
+
+Phase 1.9 starts from HEAD baseline
+`53e5f394f41a004e9cd29659142981e2d1654196` (`53e5f39`) on branch `123`.
+
+The design reference is
+`docs/phase-1-9-task-lifecycle-state-machine-boundary-design.md`, with
+documentation-only coverage in
+`tests/test_phase_1_9_task_lifecycle_state_machine_boundary_design_docs.py`.
+
+Phase 1.9 is Platform Design Baseline convergence, docs/tests-only,
+design-only, report-only, and not runtime lifecycle implementation. It records
+future state vocabulary, allowed and blocked transitions, succeeded gates,
+cancellation and cleanup semantics, failure taxonomy, retry, idempotency,
+replay, concurrency, authoritative-state, transition audit, and Scientific
+Pilot boundaries.
+
+The existing in-memory mock state machine remains unchanged and is not promoted
+to a future runtime contract. No executable state machine, database state
+store, queue, worker, scheduler, runner, cancellation signal, retry engine,
+audit persistence, runtime API integration, real task, pipeline, Snakemake,
+GEO/SRA, Coze, network, credential, artifact, or sandbox behavior is added.
+
+The conclusion is: not ready for runtime lifecycle implementation. The next
+recommended stage remains Platform Design Baseline Completion / Go-No-Go Audit;
+Scientific Pilot Readiness Planning may follow only after that separately
+authorized audit.
