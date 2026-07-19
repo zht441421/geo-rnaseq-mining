@@ -4,6 +4,51 @@ This changelog preserves the current governance history for the outer
 workspace. Earlier repository history remains available through Git. This file
 now leads with the synchronized Platform Design Baseline state.
 
+## 2026-07-19 - Phase 2.1 Scientific Pilot Readiness Planning
+
+### Summary
+
+Phase 2.1 starts Scientific Pilot Readiness Planning for `geo-rnaseq-mining`.
+This phase is docs/tests-only, planning-only, scientific-governance-only,
+no-external-access, no-data-download, no-runtime-implementation, and
+no-scientific-execution.
+
+### Changes
+
+- Created `docs/phase-2-1-scientific-pilot-readiness-planning.md`.
+- Created `tests/test_phase_2_1_scientific_pilot_readiness_planning_docs.py`.
+- Updated `docs/CURRENT_STATE.md` to identify Phase 2.1 as the current phase.
+- Updated `docs/NEXT_TASK.md` to identify Scientific Pilot Candidate Dataset
+  Review and Execution Go/No-Go Preparation as the future next stage.
+- Updated `PROJECT_SUMMARY_FOR_USER.md` with a concise planning-only handoff.
+- Documented the pilot scientific question template.
+- Documented the pilot scope boundary.
+- Documented dataset-selection inclusion and exclusion criteria.
+- Documented a report-only candidate dataset record schema.
+- Documented manual review gates.
+- Documented evidence package requirements.
+- Documented preliminary analysis-plan boundaries.
+- Documented pilot success and failure criteria.
+- Documented pre-execution and future execution stop conditions.
+- Documented run-log and result-package requirements.
+- Documented interpretation and execution authorization boundaries.
+- Documented runtime separation.
+
+### Boundaries
+
+- No external access.
+- No GEO/SRA/NCBI/Entrez access.
+- No data download.
+- No dataset selection.
+- No runtime implementation.
+- No scientific execution.
+- No pipeline or Snakemake execution.
+- No Coze access.
+- No credentials, tokens, or environment-secret reads.
+- No database, queue, worker, scheduler, runner, sandbox, or artifact
+  implementation.
+- No Git commit or push during this implementation stage.
+
 ## 2026-07-19 - Phase 1.10 Project State Synchronization
 
 ### Summary
